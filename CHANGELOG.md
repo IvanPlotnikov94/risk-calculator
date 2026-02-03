@@ -7,20 +7,13 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-02-03
+
 ### Fixed
-- Добавлена валидация для стоп-лосса и тейк-профита относительно цен входа
-- Исправлены примеры в документации (SL для Short: 92000 → 93000)
-- Добавлены визуальные предупреждения (желтые рамки) для невалидных значений
+- Fix local build errors (TypeScript unused variable warnings)
 
 ### Added
-- Валидация стоп-лосса: должен быть выше входов для Short, ниже для Long
-- Валидация тейк-профита: должен быть ниже входов для Short, выше для Long
-- Валидация цен входов: должны быть между TP и SL
-- 8 новых unit-тестов для проверки логики валидации
-- Раздел "Валидация и предупреждения" в USAGE.md
-
-### Changed
-- Дефолтный стоп-лосс изменен с 92000 на 93000
+- Add Vercel deployment configuration with SPA routing support
 
 ## [0.1.0] - 2026-02-03
 
@@ -49,5 +42,6 @@
 - Tailwind CSS для стилизации
 - Vitest для тестирования
 
-[Unreleased]: https://github.com/yourusername/risk-calculator/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/yourusername/risk-calculator/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/yourusername/risk-calculator/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/yourusername/risk-calculator/releases/tag/v0.1.0

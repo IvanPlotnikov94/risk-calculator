@@ -4,7 +4,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Vue](https://img.shields.io/badge/Vue-3.4-42b883.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.2-3178c6.svg)
@@ -86,6 +86,18 @@ npm test
 - **[USAGE.md](USAGE.md)** - руководство пользователя с примерами
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - архитектура и структура проекта
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - как внести вклад в проект
+- **[VERCEL_DEPLOY.md](VERCEL_DEPLOY.md)** - инструкции по деплою на Vercel
+
+## 🚀 Деплой
+
+Приложение готово к деплою на Vercel. Конфигурация уже настроена в `vercel.json` с поддержкой SPA роутинга (Vue Router history mode).
+
+**Быстрый деплой:**
+1. Подключите репозиторий к [Vercel](https://vercel.com)
+2. Vercel автоматически определит настройки
+3. Нажмите "Deploy"
+
+Подробные инструкции: **[VERCEL_DEPLOY.md](VERCEL_DEPLOY.md)**
 
 ## 🛠️ Технологический стек
 
