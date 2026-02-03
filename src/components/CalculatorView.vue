@@ -1,10 +1,7 @@
 <script setup lang="ts">
-import { useCalculatorStore } from '@/stores/calculator'
 import PositionSettings from './PositionSettings.vue'
 import EntriesTable from './EntriesTable.vue'
 import PositionSummaryCard from './PositionSummaryCard.vue'
-
-const store = useCalculatorStore()
 </script>
 
 <template>

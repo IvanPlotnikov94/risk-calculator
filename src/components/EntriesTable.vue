@@ -57,7 +57,7 @@ const handleSort = (order: 'original' | 'asc' | 'desc') => {
       <div class="text-sm text-gray-300 mb-2">Пресеты размеров:</div>
       <div class="flex flex-wrap gap-2">
         <div
-          v-for="(preset, index) in store.presets"
+          v-for="(_, index) in store.presets"
           :key="index"
           class="flex items-center gap-2"
         >

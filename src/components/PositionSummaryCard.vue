@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useCalculatorStore } from '@/stores/calculator'
-import { computed } from 'vue'
 
 const store = useCalculatorStore()
 

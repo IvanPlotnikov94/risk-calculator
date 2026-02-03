@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { CalculatorState, Entry, PositionDirection, PartialScenario, PositionSummary } from '@/types'
+import type { Entry, PositionDirection, PartialScenario, PositionSummary } from '@/types'
 
 export const useCalculatorStore = defineStore('calculator', () => {
   // State
