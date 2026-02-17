@@ -7,6 +7,18 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-02-18
+
+### Changed
+- Убраны точки входа по умолчанию: калькулятор запускается с пустым списком входов.
+- Убраны значения стоп-лосса и тейк-профита по умолчанию, а также плейсхолдеры в полях ввода.
+- Добавлена валидация данных при добавлении нового входа.
+- Добавление нового входа разрешено только после заполнения всех обязательных полей текущего входа.
+- Кнопка «Добавить вход» перенесена в более логичное место интерфейса.
+
+### Fixed
+- Исправлены различные баги.
+
 ## [0.2.0] - 2026-02-03
 
 ### Fixed
@@ -42,6 +54,7 @@
 - Tailwind CSS для стилизации
 - Vitest для тестирования
 
-[Unreleased]: https://github.com/yourusername/risk-calculator/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/yourusername/risk-calculator/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/yourusername/risk-calculator/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/yourusername/risk-calculator/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/yourusername/risk-calculator/releases/tag/v0.1.0
