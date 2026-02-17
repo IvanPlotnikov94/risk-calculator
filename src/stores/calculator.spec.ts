@@ -12,9 +12,9 @@ describe('Calculator Store', () => {
     
     expect(store.ticker).toBe('BTC')
     expect(store.direction).toBe('short')
-    expect(store.entries.length).toBe(2)
-    expect(store.stopLoss).toBe(92000)
-    expect(store.takeProfit).toBe(85000)
+    expect(store.entries.length).toBe(0)
+    expect(store.stopLoss).toBeNull()
+    expect(store.takeProfit).toBeNull()
   })
 
   it('adds a new entry', () => {
@@ -28,6 +28,7 @@ describe('Calculator Store', () => {
 
   it('removes an entry', () => {
     const store = useCalculatorStore()
+    store.addEntry()
     const firstEntryId = store.entries[0].id
     
     store.removeEntry(firstEntryId)
@@ -37,6 +38,7 @@ describe('Calculator Store', () => {
 
   it('updates entry price', () => {
     const store = useCalculatorStore()
+    store.addEntry()
     const firstEntry = store.entries[0]
     
     store.updateEntry(firstEntry.id, 'price', 95000)
@@ -54,10 +56,9 @@ describe('Calculator Store', () => {
     
     const summary = store.positionSummary
     
-    // avg = (100 + 100) / (100/90000 + 100/91000)
-    // avg = 200 / (0.00111111 + 0.00109890)
-    // avg ≈ 90495.05
-    expect(Math.round(summary.avgPrice)).toBe(90495)
+    // avg = totalAmount / totalQty, totalQty = 100/90000 + 100/91000
+    // avg ≈ 90496.9
+    expect(Math.round(summary.avgPrice)).toBe(90497)
   })
 
   it('calculates PnL correctly for short position', () => {
@@ -143,6 +144,7 @@ describe('Calculator Store', () => {
 
   it('applies preset correctly', () => {
     const store = useCalculatorStore()
+    store.addEntry()
     const firstEntry = store.entries[0]
     
     store.applyPreset(firstEntry.id, 500)
@@ -186,7 +188,7 @@ describe('Calculator Store', () => {
     
     // Second scenario: both entries
     expect(scenarios[1].entryPrice).toBe(91000)
-    expect(Math.round(scenarios[1].avgPrice)).toBe(90495)
+    expect(Math.round(scenarios[1].avgPrice!)).toBe(90497)
   })
 
   describe('Validation', () => {

@@ -73,7 +73,6 @@ const handleDirectionChange = (dir: PositionDirection) => {
               ? 'border-2 border-yellow-500 focus:ring-yellow-500'
               : 'border border-slate-600 focus:ring-blue-500'
           ]"
-          placeholder="93000"
         />
         <div
           v-if="!store.isStopLossValid"
@@ -99,7 +98,6 @@ const handleDirectionChange = (dir: PositionDirection) => {
               ? 'border-2 border-yellow-500 focus:ring-yellow-500'
               : 'border border-slate-600 focus:ring-blue-500'
           ]"
-          placeholder="85000"
         />
         <div
           v-if="!store.isTakeProfitValid"
@@ -108,16 +106,6 @@ const handleDirectionChange = (dir: PositionDirection) => {
           <span>⚠️</span>
           <span>{{ store.takeProfitValidationMessage }}</span>
         </div>
-      </div>
-
-      <!-- Add Entry Button -->
-      <div class="flex items-end">
-        <button
-          @click="store.addEntry"
-          class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-colors"
-        >
-          + Добавить вход
-        </button>
       </div>
     </div>
   </div>

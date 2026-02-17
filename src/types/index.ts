@@ -10,14 +10,14 @@ export interface Entry {
 export interface PartialScenario {
   entryId: string
   entryPrice: number
-  avgPrice: number
-  totalQty: number
-  totalAmount: number
-  pnlAtStop: number
-  pnlAtTake: number
-  percentToStop: number
-  percentToTake: number
-  riskReward: number
+  avgPrice?: number
+  totalQty?: number
+  totalAmount?: number
+  pnlAtStop?: number
+  pnlAtTake?: number
+  percentToStop?: number
+  percentToTake?: number
+  riskReward?: number
 }
 
 export interface PositionSummary {
