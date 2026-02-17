@@ -29,18 +29,23 @@ const entryValidationMessage = computed(() => {
 })
 
 const formatNumber = (num: number | undefined, decimals: number = 2): string => {
-  if (num === undefined) return '-'
+  if (num === undefined || Number.isNaN(num)) return ''
   return num.toFixed(decimals)
 }
 
 const formatCurrency = (num: number | undefined): string => {
-  if (num === undefined) return '-'
+  if (num === undefined || Number.isNaN(num)) return ''
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(num)
+}
+
+const formatPercent = (num: number | undefined, decimals: number = 2): string => {
+  if (num === undefined || Number.isNaN(num)) return ''
+  return num.toFixed(decimals) + '%'
 }
 
 const handleRemove = () => {
@@ -132,12 +137,12 @@ const applyPreset = (presetValue: number) => {
     
     <!-- % to SL -->
     <td class="py-3 px-2 text-red-400 font-medium">
-      {{ formatNumber(scenario?.percentToStop, 2) }}%
+      {{ formatPercent(scenario?.percentToStop, 2) }}
     </td>
     
     <!-- % to TP -->
     <td class="py-3 px-2 text-green-400 font-medium">
-      {{ formatNumber(scenario?.percentToTake, 2) }}%
+      {{ formatPercent(scenario?.percentToTake, 2) }}
     </td>
     
     <!-- PnL at SL -->

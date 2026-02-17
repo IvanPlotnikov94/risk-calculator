@@ -6,12 +6,9 @@ export const useCalculatorStore = defineStore('calculator', () => {
   // State
   const ticker = ref<string>('BTC')
   const direction = ref<PositionDirection>('short')
-  const entries = ref<Entry[]>([
-    { id: crypto.randomUUID(), price: 90000, amount: 100, originalIndex: 0 },
-    { id: crypto.randomUUID(), price: 91000, amount: 100, originalIndex: 1 },
-  ])
-  const stopLoss = ref<number>(93000)
-  const takeProfit = ref<number>(85000)
+  const entries = ref<Entry[]>([])
+  const stopLoss = ref<number | null>(null)
+  const takeProfit = ref<number | null>(null)
   const presets = ref<number[]>([50, 100, 200, 500, 1000])
   
   // Sorting state
@@ -41,47 +38,79 @@ export const useCalculatorStore = defineStore('calculator', () => {
     }
   })
 
-  // Calculate partial scenarios
+  // Helper: entry is filled when both price and amount are set
+  const isEntryFilled = (e: Entry) => e.price > 0 && e.amount > 0
+
+  // Helper: SL/TP is considered set only when it's a valid finite number (not null, not NaN)
+  const isSlTpSet = (v: number | null): v is number =>
+    v != null && Number.isFinite(v)
+
+  // Calculate partial scenarios (only when "Цена входа" and "Сумма (USDT)" are both filled)
   const partialScenarios = computed((): PartialScenario[] => {
     const ordered = executionOrderEntries.value
     const scenarios: PartialScenario[] = []
 
     for (let i = 0; i < ordered.length; i++) {
       const entriesUpToI = ordered.slice(0, i + 1)
-      
-      // Calculate quantities
-      const quantities = entriesUpToI.map(e => e.amount / e.price)
-      const totalQty = quantities.reduce((sum, qty) => sum + qty, 0)
-      const totalAmount = entriesUpToI.reduce((sum, e) => sum + e.amount, 0)
-      
-      // Calculate average price
-      const avgPrice = totalAmount / totalQty
+      const filledUpToI = entriesUpToI.filter(isEntryFilled)
+      const currentFilled = isEntryFilled(ordered[i])
 
-      // Calculate PnL
+      if (!currentFilled) {
+        scenarios.push({
+          entryId: ordered[i].id,
+          entryPrice: ordered[i].price,
+        })
+        continue
+      }
+
+      const quantities = filledUpToI.map(e => e.amount / e.price)
+      const totalQty = quantities.reduce((sum, qty) => sum + qty, 0)
+      const totalAmount = filledUpToI.reduce((sum, e) => sum + e.amount, 0)
+      const avgPrice = totalQty > 0 ? totalAmount / totalQty : 0
+
+      if (!isSlTpSet(stopLoss.value) || !isSlTpSet(takeProfit.value)) {
+        scenarios.push({
+          entryId: ordered[i].id,
+          entryPrice: ordered[i].price,
+          avgPrice,
+          totalQty,
+          totalAmount,
+          pnlAtStop: 0,
+          pnlAtTake: 0,
+          percentToStop: 0,
+          percentToTake: 0,
+          riskReward: 0,
+        })
+        continue
+      }
+
+      const sl = stopLoss.value
+      const tp = takeProfit.value
       let pnlAtStop: number
       let pnlAtTake: number
-
       if (direction.value === 'long') {
-        pnlAtStop = (stopLoss.value - avgPrice) * totalQty
-        pnlAtTake = (takeProfit.value - avgPrice) * totalQty
+        pnlAtStop = (sl - avgPrice) * totalQty
+        pnlAtTake = (tp - avgPrice) * totalQty
       } else {
-        pnlAtStop = (avgPrice - stopLoss.value) * totalQty
-        pnlAtTake = (avgPrice - takeProfit.value) * totalQty
+        pnlAtStop = (avgPrice - sl) * totalQty
+        pnlAtTake = (avgPrice - tp) * totalQty
       }
 
-      // Calculate percentages
       let percentToStop: number
       let percentToTake: number
-
-      if (direction.value === 'long') {
-        percentToStop = ((avgPrice - stopLoss.value) / avgPrice) * 100
-        percentToTake = ((takeProfit.value - avgPrice) / avgPrice) * 100
+      if (avgPrice > 0) {
+        if (direction.value === 'long') {
+          percentToStop = ((avgPrice - sl) / avgPrice) * 100
+          percentToTake = ((tp - avgPrice) / avgPrice) * 100
+        } else {
+          percentToStop = ((sl - avgPrice) / avgPrice) * 100
+          percentToTake = ((avgPrice - tp) / avgPrice) * 100
+        }
       } else {
-        percentToStop = ((stopLoss.value - avgPrice) / avgPrice) * 100
-        percentToTake = ((avgPrice - takeProfit.value) / avgPrice) * 100
+        percentToStop = 0
+        percentToTake = 0
       }
 
-      // Calculate R/R
       const riskUSD = Math.abs(pnlAtStop)
       const rewardUSD = Math.abs(pnlAtTake)
       const riskReward = riskUSD > 0 ? rewardUSD / riskUSD : 0
@@ -108,9 +137,13 @@ export const useCalculatorStore = defineStore('calculator', () => {
     return partialScenarios.value.find(s => s.entryId === entryId)
   }
 
-  // Position summary (all entries executed)
+  // Position summary (only when all entries have price and amount filled)
+  const hasValidPositionSummary = computed(() => {
+    return entries.value.length > 0 && entries.value.every(isEntryFilled)
+  })
+
   const positionSummary = computed((): PositionSummary => {
-    if (entries.value.length === 0) {
+    if (!hasValidPositionSummary.value) {
       return {
         totalQty: 0,
         totalAmount: 0,
@@ -122,8 +155,7 @@ export const useCalculatorStore = defineStore('calculator', () => {
     }
 
     const lastScenario = partialScenarios.value[partialScenarios.value.length - 1]
-    
-    if (!lastScenario) {
+    if (!lastScenario || lastScenario.avgPrice === undefined) {
       return {
         totalQty: 0,
         totalAmount: 0,
@@ -135,23 +167,31 @@ export const useCalculatorStore = defineStore('calculator', () => {
     }
 
     return {
-      totalQty: lastScenario.totalQty,
-      totalAmount: lastScenario.totalAmount,
+      totalQty: lastScenario.totalQty ?? 0,
+      totalAmount: lastScenario.totalAmount ?? 0,
       avgPrice: lastScenario.avgPrice,
-      riskUSD: Math.abs(lastScenario.pnlAtStop),
-      rewardUSD: Math.abs(lastScenario.pnlAtTake),
-      riskReward: lastScenario.riskReward,
+      riskUSD: Math.abs(lastScenario.pnlAtStop ?? 0),
+      rewardUSD: Math.abs(lastScenario.pnlAtTake ?? 0),
+      riskReward: lastScenario.riskReward ?? 0,
     }
   })
 
-  // Check if R/R is suspicious
+  // Check if R/R is suspicious (only when we have valid summary)
   const isRiskRewardSuspicious = computed(() => {
+    if (!hasValidPositionSummary.value) return false
     const rr = positionSummary.value.riskReward
     return rr > 10 || rr < 0.2
   })
 
+  // Can add new entry only when SL/TP are set (valid numbers) and all current entries have price and amount filled
+  const canAddEntry = computed(() => {
+    if (!isSlTpSet(stopLoss.value) || !isSlTpSet(takeProfit.value)) return false
+    return entries.value.length === 0 || entries.value.every(isEntryFilled)
+  })
+
   // Validation: Check if stop loss is valid
   const isStopLossValid = computed(() => {
+    if (!isSlTpSet(stopLoss.value)) return true
     if (entries.value.length === 0) return true
     
     const entryPrices = entries.value.map(e => e.price).filter(p => p > 0)
@@ -170,6 +210,7 @@ export const useCalculatorStore = defineStore('calculator', () => {
 
   // Validation: Check if take profit is valid
   const isTakeProfitValid = computed(() => {
+    if (!isSlTpSet(takeProfit.value)) return true
     if (entries.value.length === 0) return true
     
     const entryPrices = entries.value.map(e => e.price).filter(p => p > 0)
@@ -188,6 +229,7 @@ export const useCalculatorStore = defineStore('calculator', () => {
 
   // Validation: Check if a specific entry price is valid
   const isEntryValid = (entryId: string): boolean => {
+    if (!isSlTpSet(stopLoss.value) || !isSlTpSet(takeProfit.value)) return true
     const entry = entries.value.find(e => e.id === entryId)
     if (!entry || entry.price <= 0) return true // Don't validate empty prices
     
@@ -277,7 +319,9 @@ export const useCalculatorStore = defineStore('calculator', () => {
     executionOrderEntries,
     partialScenarios,
     positionSummary,
+    hasValidPositionSummary,
     isRiskRewardSuspicious,
+    canAddEntry,
     
     // Validation
     isStopLossValid,

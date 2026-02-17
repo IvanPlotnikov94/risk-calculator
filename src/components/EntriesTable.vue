@@ -11,11 +11,12 @@ const handleSort = (order: 'original' | 'asc' | 'desc') => {
 
 <template>
   <div class="bg-slate-800 rounded-lg p-6 shadow-xl">
-    <div class="flex justify-between items-center mb-4">
+    <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
       <h2 class="text-xl font-semibold text-white">Точки входа</h2>
       
-      <!-- Sort buttons -->
-      <div class="flex gap-2">
+      <div class="flex items-center gap-3">
+        <!-- Sort buttons (only when there are entries) -->
+        <div v-if="store.entries.length > 0" class="flex gap-2">
         <button
           @click="handleSort('original')"
           :class="[
@@ -48,6 +49,22 @@ const handleSort = (order: 'original' | 'asc' | 'desc') => {
           ]"
         >
           ↓ По убыванию
+        </button>
+        </div>
+        <!-- Add entry button (disabled until SL/TP and current entries are filled) -->
+        <button
+          @click="store.addEntry"
+          :disabled="!store.canAddEntry"
+          :class="[
+            'shrink-0 px-4 py-2 rounded-md font-medium transition-colors flex items-center gap-2',
+            store.canAddEntry
+              ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'
+              : 'bg-slate-600 text-slate-400 cursor-not-allowed'
+          ]"
+          title="Заполните Стоп-лосс и Тейк-профит, затем при необходимости — цену и сумму входа"
+        >
+          <span class="text-lg leading-none">+</span>
+          <span>Добавить вход</span>
         </button>
       </div>
     </div>
@@ -92,18 +109,35 @@ const handleSort = (order: 'original' | 'asc' | 'desc') => {
           </tr>
         </thead>
         <tbody>
-          <EntryRow
-            v-for="(entry, index) in store.sortedEntries"
-            :key="entry.id"
-            :entry="entry"
-            :index="index"
-          />
+          <template v-if="store.entries.length === 0">
+            <tr>
+              <td colspan="12" class="py-12 text-center">
+                <p class="text-gray-400 mb-4">Заполните Стоп-лосс и Тейк-профит, затем добавьте точку входа</p>
+                <button
+                  @click="store.addEntry"
+                  :disabled="!store.canAddEntry"
+                  :class="[
+                    'px-4 py-2 rounded-md font-medium transition-colors',
+                    store.canAddEntry
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'
+                      : 'bg-slate-600 text-slate-400 cursor-not-allowed'
+                  ]"
+                >
+                  + Добавить вход
+                </button>
+              </td>
+            </tr>
+          </template>
+          <template v-else>
+            <EntryRow
+              v-for="(entry, index) in store.sortedEntries"
+              :key="entry.id"
+              :entry="entry"
+              :index="index"
+            />
+          </template>
         </tbody>
       </table>
-    </div>
-
-    <div v-if="store.entries.length === 0" class="text-center py-8 text-gray-400">
-      Нет точек входа. Добавьте первый вход, чтобы начать расчет.
     </div>
   </div>
 </template>
