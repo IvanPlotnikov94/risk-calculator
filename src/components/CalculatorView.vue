@@ -15,10 +15,11 @@ import PositionSummaryCard from './PositionSummaryCard.vue'
     <!-- Position Settings -->
     <PositionSettings />
 
-    <!-- Position Summary -->
-    <PositionSummaryCard />
 
     <!-- Entries Table -->
     <EntriesTable />
+
+    <!-- Position Summary -->
+    <PositionSummaryCard />
   </div>
 </template>

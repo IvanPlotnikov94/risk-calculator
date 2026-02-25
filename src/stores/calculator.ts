@@ -5,7 +5,7 @@ import type { Entry, PositionDirection, PartialScenario, PositionSummary } from 
 export const useCalculatorStore = defineStore('calculator', () => {
   // State
   const ticker = ref<string>('BTC')
-  const direction = ref<PositionDirection>('short')
+  const direction = ref<PositionDirection>('long')
   const entries = ref<Entry[]>([])
   const stopLoss = ref<number | null>(null)
   const takeProfit = ref<number | null>(null)

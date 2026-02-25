@@ -111,7 +111,7 @@ const handleSort = (order: 'original' | 'asc' | 'desc') => {
         <tbody>
           <template v-if="store.entries.length === 0">
             <tr>
-              <td colspan="12" class="py-12 text-center">
+              <td colspan="12" class="py-5 text-center">
                 <p class="text-gray-400 mb-4">Заполните Стоп-лосс и Тейк-профит, затем добавьте точку входа</p>
                 <button
                   @click="store.addEntry"
