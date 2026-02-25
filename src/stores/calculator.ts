@@ -137,13 +137,19 @@ export const useCalculatorStore = defineStore('calculator', () => {
     return partialScenarios.value.find(s => s.entryId === entryId)
   }
 
-  // Position summary (only when all entries have price and amount filled)
-  const hasValidPositionSummary = computed(() => {
-    return entries.value.length > 0 && entries.value.every(isEntryFilled)
-  })
+  // Есть ли хотя бы один заполненный вход (цена и сумма > 0)
+  const hasMeaningfulPositionSummary = computed(() =>
+    entries.value.some(isEntryFilled)
+  )
 
+  // Сводка считается только по заполненным входам (по последнему в порядке исполнения)
   const positionSummary = computed((): PositionSummary => {
-    if (!hasValidPositionSummary.value) {
+    const ordered = executionOrderEntries.value
+    let lastFilledIndex = -1
+    for (let i = 0; i < ordered.length; i++) {
+      if (isEntryFilled(ordered[i])) lastFilledIndex = i
+    }
+    if (lastFilledIndex === -1) {
       return {
         totalQty: 0,
         totalAmount: 0,
@@ -154,8 +160,8 @@ export const useCalculatorStore = defineStore('calculator', () => {
       }
     }
 
-    const lastScenario = partialScenarios.value[partialScenarios.value.length - 1]
-    if (!lastScenario || lastScenario.avgPrice === undefined) {
+    const scenario = partialScenarios.value[lastFilledIndex]
+    if (!scenario || scenario.avgPrice === undefined) {
       return {
         totalQty: 0,
         totalAmount: 0,
@@ -167,18 +173,23 @@ export const useCalculatorStore = defineStore('calculator', () => {
     }
 
     return {
-      totalQty: lastScenario.totalQty ?? 0,
-      totalAmount: lastScenario.totalAmount ?? 0,
-      avgPrice: lastScenario.avgPrice,
-      riskUSD: Math.abs(lastScenario.pnlAtStop ?? 0),
-      rewardUSD: Math.abs(lastScenario.pnlAtTake ?? 0),
-      riskReward: lastScenario.riskReward ?? 0,
+      totalQty: scenario.totalQty ?? 0,
+      totalAmount: scenario.totalAmount ?? 0,
+      avgPrice: scenario.avgPrice,
+      riskUSD: Math.abs(scenario.pnlAtStop ?? 0),
+      rewardUSD: Math.abs(scenario.pnlAtTake ?? 0),
+      riskReward: scenario.riskReward ?? 0,
     }
   })
 
-  // Check if R/R is suspicious (only when we have valid summary)
+  // Все входы заполнены (для canAddEntry и обратной совместимости)
+  const hasValidPositionSummary = computed(() => {
+    return entries.value.length > 0 && entries.value.every(isEntryFilled)
+  })
+
+  // Check if R/R is suspicious (when we have meaningful summary)
   const isRiskRewardSuspicious = computed(() => {
-    if (!hasValidPositionSummary.value) return false
+    if (!hasMeaningfulPositionSummary.value) return false
     const rr = positionSummary.value.riskReward
     return rr > 10 || rr < 0.2
   })
@@ -264,6 +275,11 @@ export const useCalculatorStore = defineStore('calculator', () => {
     }
   })
 
+  // Есть хотя бы одна рассчитанная точка входа (цена и сумма заполнены, валидации пройдены)
+  const hasAtLeastOneCalculatedEntry = computed(() =>
+    entries.value.some((e) => isEntryFilled(e) && isEntryValid(e.id))
+  )
+
   // Actions
   const addEntry = () => {
     const maxIndex = entries.value.length > 0 
@@ -320,6 +336,7 @@ export const useCalculatorStore = defineStore('calculator', () => {
     partialScenarios,
     positionSummary,
     hasValidPositionSummary,
+    hasMeaningfulPositionSummary,
     isRiskRewardSuspicious,
     canAddEntry,
     
@@ -327,6 +344,7 @@ export const useCalculatorStore = defineStore('calculator', () => {
     isStopLossValid,
     isTakeProfitValid,
     isEntryValid,
+    hasAtLeastOneCalculatedEntry,
     stopLossValidationMessage,
     takeProfitValidationMessage,
     

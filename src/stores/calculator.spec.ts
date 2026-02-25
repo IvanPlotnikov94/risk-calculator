@@ -11,7 +11,7 @@ describe('Calculator Store', () => {
     const store = useCalculatorStore()
     
     expect(store.ticker).toBe('BTC')
-    expect(store.direction).toBe('short')
+    expect(store.direction).toBe('long')
     expect(store.entries.length).toBe(0)
     expect(store.stopLoss).toBeNull()
     expect(store.takeProfit).toBeNull()
@@ -189,6 +189,71 @@ describe('Calculator Store', () => {
     // Second scenario: both entries
     expect(scenarios[1].entryPrice).toBe(91000)
     expect(Math.round(scenarios[1].avgPrice!)).toBe(90497)
+  })
+
+  describe('Position summary with partial entries', () => {
+    it('shows summary only for filled entries when second entry is empty', () => {
+      const store = useCalculatorStore()
+      store.direction = 'short'
+      store.entries = [
+        { id: '1', price: 90000, amount: 100, originalIndex: 0 },
+        { id: '2', price: 0, amount: 0, originalIndex: 1 },
+      ]
+      store.stopLoss = 92000
+      store.takeProfit = 85000
+
+      const summary = store.positionSummary
+
+      // Summary must be for first entry only (last filled in execution order)
+      expect(store.hasMeaningfulPositionSummary).toBe(true)
+      expect(summary.avgPrice).toBe(90000)
+      expect(summary.totalAmount).toBe(100)
+      expect(summary.totalQty).toBeCloseTo(100 / 90000, 5)
+      expect(summary.riskUSD).toBeCloseTo(2.22, 1)
+      expect(summary.rewardUSD).toBeCloseTo(5.56, 1)
+    })
+
+    it('keeps summary when new unfilled entry is added after one filled entry', () => {
+      const store = useCalculatorStore()
+      store.direction = 'long'
+      store.entries = [
+        { id: '1', price: 89000, amount: 200, originalIndex: 0 },
+      ]
+      store.stopLoss = 88000
+      store.takeProfit = 95000
+
+      const summaryBefore = store.positionSummary
+      expect(summaryBefore.avgPrice).toBeCloseTo(89000, 0)
+      expect(summaryBefore.totalAmount).toBe(200)
+
+      store.addEntry()
+      expect(store.entries.length).toBe(2)
+      expect(store.entries[1].price).toBe(0)
+      expect(store.entries[1].amount).toBe(0)
+
+      const summaryAfter = store.positionSummary
+      expect(summaryAfter.avgPrice).toBeCloseTo(89000, 0)
+      expect(summaryAfter.totalAmount).toBe(200)
+      expect(store.hasMeaningfulPositionSummary).toBe(true)
+    })
+
+    it('hasMeaningfulPositionSummary is true when at least one entry is filled', () => {
+      const store = useCalculatorStore()
+      store.entries = [
+        { id: '1', price: 90000, amount: 100, originalIndex: 0 },
+        { id: '2', price: 0, amount: 0, originalIndex: 1 },
+      ]
+      expect(store.hasMeaningfulPositionSummary).toBe(true)
+    })
+
+    it('hasMeaningfulPositionSummary is false when no entry is filled', () => {
+      const store = useCalculatorStore()
+      store.addEntry()
+      store.addEntry()
+      expect(store.hasMeaningfulPositionSummary).toBe(false)
+      expect(store.positionSummary.avgPrice).toBe(0)
+      expect(store.positionSummary.totalAmount).toBe(0)
+    })
   })
 
   describe('Validation', () => {

@@ -3,13 +3,13 @@ import { useCalculatorStore } from '@/stores/calculator'
 
 const store = useCalculatorStore()
 
-const formatNumber = (num: number | undefined, decimals: number = 2): string => {
-  if (num === undefined || Number.isNaN(num) || !store.hasValidPositionSummary) return ''
-  return num.toFixed(decimals)
+const formatNumber = (num: number | undefined, decimals: number = 2, ticker: string = ''): string => {
+  if (num === undefined || Number.isNaN(num) || !store.hasMeaningfulPositionSummary) return ''
+  return `${num.toFixed(decimals)} ${ticker}`
 }
 
 const formatCurrency = (num: number | undefined): string => {
-  if (num === undefined || Number.isNaN(num) || !store.hasValidPositionSummary) return ''
+  if (num === undefined || Number.isNaN(num) || !store.hasMeaningfulPositionSummary) return ''
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -20,7 +20,7 @@ const formatCurrency = (num: number | undefined): string => {
 </script>
 
 <template>
-  <div class="bg-slate-800 rounded-lg p-6 shadow-xl">
+  <div v-if="store.hasAtLeastOneCalculatedEntry" class="bg-slate-800 rounded-lg p-6 shadow-xl">
     <h2 class="text-xl font-semibold text-white mb-4">Сводка по позиции (все входы)</h2>
     
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -36,7 +36,7 @@ const formatCurrency = (num: number | undefined): string => {
       <div class="bg-slate-700 rounded-lg p-4">
         <div class="text-sm text-gray-400 mb-1">Общий объем</div>
         <div class="text-xl font-bold text-white">
-          {{ formatNumber(store.positionSummary?.totalQty, 6) }}
+          {{ formatNumber(store.positionSummary?.totalQty, 6, store.ticker) }}
         </div>
       </div>
 
