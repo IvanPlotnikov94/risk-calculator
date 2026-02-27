@@ -1,6 +1,25 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import type { Entry, PositionDirection, PartialScenario, PositionSummary } from '@/types'
+
+const PRESETS_STORAGE_KEY = 'risk-calculator-presets'
+const DEFAULT_PRESETS = [50, 100, 200, 500, 1000]
+const MAX_PRESETS_LENGTH = 20
+
+const loadPresets = (): number[] => {
+  try {
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(PRESETS_STORAGE_KEY) : null
+    if (raw == null) return [...DEFAULT_PRESETS]
+    const parsed = JSON.parse(raw) as unknown
+    if (!Array.isArray(parsed)) return [...DEFAULT_PRESETS]
+    const filtered = parsed
+      .filter((v): v is number => typeof v === 'number' && Number.isFinite(v) && v >= 0)
+      .slice(0, MAX_PRESETS_LENGTH)
+    return filtered.length > 0 ? filtered : [...DEFAULT_PRESETS]
+  } catch {
+    return [...DEFAULT_PRESETS]
+  }
+}
 
 export const useCalculatorStore = defineStore('calculator', () => {
   // State
@@ -9,7 +28,17 @@ export const useCalculatorStore = defineStore('calculator', () => {
   const entries = ref<Entry[]>([])
   const stopLoss = ref<number | null>(null)
   const takeProfit = ref<number | null>(null)
-  const presets = ref<number[]>([50, 100, 200, 500, 1000])
+  const presets = ref<number[]>(loadPresets())
+
+  watch(
+    presets,
+    (newVal) => {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(PRESETS_STORAGE_KEY, JSON.stringify(newVal))
+      }
+    },
+    { deep: true }
+  )
   
   // Sorting state
   const sortOrder = ref<'original' | 'asc' | 'desc'>('original')

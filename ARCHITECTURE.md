@@ -79,7 +79,7 @@ risk-calculator/
 - `entries` - массив точек входа
 - `stopLoss` - цена стоп-лосса
 - `takeProfit` - цена тейк-профита
-- `presets` - массив пресетов размеров
+- `presets` - массив пресетов размеров (загружается из localStorage при инициализации, сохраняется при изменении; ключ `risk-calculator-presets`)
 - `sortOrder` - порядок сортировки таблицы
 
 **Computed:**

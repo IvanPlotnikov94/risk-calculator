@@ -1,9 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest'
+import { nextTick } from 'vue'
 import { setActivePinia, createPinia } from 'pinia'
 import { useCalculatorStore } from './calculator'
 
 describe('Calculator Store', () => {
   beforeEach(() => {
+    localStorage.removeItem('risk-calculator-presets')
     setActivePinia(createPinia())
   })
 
@@ -146,10 +148,22 @@ describe('Calculator Store', () => {
     const store = useCalculatorStore()
     store.addEntry()
     const firstEntry = store.entries[0]
-    
+
     store.applyPreset(firstEntry.id, 500)
-    
+
     expect(store.entries[0].amount).toBe(500)
+  })
+
+  it('persists presets to localStorage and loads them on next store init', async () => {
+    const store = useCalculatorStore()
+    const customPresets = [25, 75, 150, 300]
+    store.presets = [...customPresets]
+    await nextTick()
+
+    setActivePinia(createPinia())
+    const store2 = useCalculatorStore()
+
+    expect(store2.presets).toEqual(customPresets)
   })
 
   it('sorts entries by original order', () => {
