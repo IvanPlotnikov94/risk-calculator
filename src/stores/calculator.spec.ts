@@ -412,5 +412,51 @@ describe('Calculator Store', () => {
       expect(store.isStopLossValid).toBe(true)
       expect(store.isTakeProfitValid).toBe(true)
     })
+
+    it('invalid entry gets minimal scenario (no calculated columns)', () => {
+      const store = useCalculatorStore()
+      store.direction = 'short'
+      store.stopLoss = 93000
+      store.takeProfit = 85000
+      store.entries = [
+        { id: '1', price: 90000, amount: 100, originalIndex: 0 },
+        { id: '2', price: 94000, amount: 50, originalIndex: 1 }, // above SL — invalid
+      ]
+      const scenarioInvalid = store.getScenarioForEntry('2')
+      expect(scenarioInvalid?.entryId).toBe('2')
+      expect(scenarioInvalid?.entryPrice).toBe(94000)
+      expect(scenarioInvalid?.avgPrice).toBeUndefined()
+      expect(scenarioInvalid?.totalQty).toBeUndefined()
+      expect(scenarioInvalid?.pnlAtStop).toBeUndefined()
+    })
+
+    it('position summary excludes invalid entries', () => {
+      const store = useCalculatorStore()
+      store.direction = 'short'
+      store.stopLoss = 93000
+      store.takeProfit = 85000
+      store.entries = [
+        { id: '1', price: 90000, amount: 100, originalIndex: 0 }, // valid
+        { id: '2', price: 94000, amount: 50, originalIndex: 1 },  // invalid (above SL)
+      ]
+      const summary = store.positionSummary
+      // Only first entry is valid — summary should be for that one only
+      expect(summary.avgPrice).toBe(90000)
+      expect(summary.totalAmount).toBe(100)
+      expect(summary.totalQty).toBeCloseTo(100 / 90000, 10)
+    })
+
+    it('hasMeaningfulPositionSummary is false when only invalid entries are filled', () => {
+      const store = useCalculatorStore()
+      store.direction = 'short'
+      store.stopLoss = 93000
+      store.takeProfit = 85000
+      store.entries = [
+        { id: '1', price: 94000, amount: 100, originalIndex: 0 }, // above SL — invalid
+      ]
+      expect(store.hasMeaningfulPositionSummary).toBe(false)
+      expect(store.positionSummary.avgPrice).toBe(0)
+      expect(store.positionSummary.totalAmount).toBe(0)
+    })
   })
 })

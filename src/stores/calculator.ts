@@ -45,17 +45,43 @@ export const useCalculatorStore = defineStore('calculator', () => {
   const isSlTpSet = (v: number | null): v is number =>
     v != null && Number.isFinite(v)
 
-  // Calculate partial scenarios (only when "Цена входа" and "Сумма (USDT)" are both filled)
+  // Validation: Check if a specific entry price is valid (used in partialScenarios and positionSummary)
+  const isEntryValid = (entryId: string): boolean => {
+    if (!isSlTpSet(stopLoss.value) || !isSlTpSet(takeProfit.value)) return true
+    const entry = entries.value.find(e => e.id === entryId)
+    if (!entry || entry.price <= 0) return true // Don't validate empty prices
+
+    if (direction.value === 'short') {
+      // Short: entry must be between TP and SL
+      return entry.price > takeProfit.value && entry.price < stopLoss.value
+    } else {
+      // Long: entry must be between SL and TP
+      return entry.price > stopLoss.value && entry.price < takeProfit.value
+    }
+  }
+
+  // Calculate partial scenarios (only when "Цена входа" and "Сумма (USDT)" are both filled AND entry is valid)
   const partialScenarios = computed((): PartialScenario[] => {
     const ordered = executionOrderEntries.value
     const scenarios: PartialScenario[] = []
 
     for (let i = 0; i < ordered.length; i++) {
       const entriesUpToI = ordered.slice(0, i + 1)
-      const filledUpToI = entriesUpToI.filter(isEntryFilled)
+      const filledAndValid = (e: Entry) => isEntryFilled(e) && isEntryValid(e.id)
+      const filledUpToI = entriesUpToI.filter(filledAndValid)
       const currentFilled = isEntryFilled(ordered[i])
+      const currentValid = isEntryValid(ordered[i].id)
 
       if (!currentFilled) {
+        scenarios.push({
+          entryId: ordered[i].id,
+          entryPrice: ordered[i].price,
+        })
+        continue
+      }
+
+      // Invalid entry (e.g. price outside TP-SL): do not calculate, show minimal scenario (only price/amount columns have data)
+      if (!currentValid) {
         scenarios.push({
           entryId: ordered[i].id,
           entryPrice: ordered[i].price,
@@ -137,19 +163,19 @@ export const useCalculatorStore = defineStore('calculator', () => {
     return partialScenarios.value.find(s => s.entryId === entryId)
   }
 
-  // Есть ли хотя бы один заполненный вход (цена и сумма > 0)
+  // Есть ли хотя бы один рассчитанный вход (заполнен и валиден) — для отображения сводки
   const hasMeaningfulPositionSummary = computed(() =>
-    entries.value.some(isEntryFilled)
+    entries.value.some((e) => isEntryFilled(e) && isEntryValid(e.id))
   )
 
-  // Сводка считается только по заполненным входам (по последнему в порядке исполнения)
+  // Сводка считается только по заполненным и валидным входам (по последнему в порядке исполнения)
   const positionSummary = computed((): PositionSummary => {
     const ordered = executionOrderEntries.value
-    let lastFilledIndex = -1
+    let lastFilledValidIndex = -1
     for (let i = 0; i < ordered.length; i++) {
-      if (isEntryFilled(ordered[i])) lastFilledIndex = i
+      if (isEntryFilled(ordered[i]) && isEntryValid(ordered[i].id)) lastFilledValidIndex = i
     }
-    if (lastFilledIndex === -1) {
+    if (lastFilledValidIndex === -1) {
       return {
         totalQty: 0,
         totalAmount: 0,
@@ -160,7 +186,7 @@ export const useCalculatorStore = defineStore('calculator', () => {
       }
     }
 
-    const scenario = partialScenarios.value[lastFilledIndex]
+    const scenario = partialScenarios.value[lastFilledValidIndex]
     if (!scenario || scenario.avgPrice === undefined) {
       return {
         totalQty: 0,
@@ -237,21 +263,6 @@ export const useCalculatorStore = defineStore('calculator', () => {
       return takeProfit.value > maxEntry
     }
   })
-
-  // Validation: Check if a specific entry price is valid
-  const isEntryValid = (entryId: string): boolean => {
-    if (!isSlTpSet(stopLoss.value) || !isSlTpSet(takeProfit.value)) return true
-    const entry = entries.value.find(e => e.id === entryId)
-    if (!entry || entry.price <= 0) return true // Don't validate empty prices
-    
-    if (direction.value === 'short') {
-      // Short: entry must be between TP and SL
-      return entry.price > takeProfit.value && entry.price < stopLoss.value
-    } else {
-      // Long: entry must be between SL and TP
-      return entry.price > stopLoss.value && entry.price < takeProfit.value
-    }
-  }
 
   // Get validation message for stop loss
   const stopLossValidationMessage = computed(() => {
