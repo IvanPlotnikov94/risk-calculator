@@ -1,4 +1,5 @@
 export type PositionDirection = 'long' | 'short'
+export type CalculatorMode = 'entry' | 'exit'
 
 export interface Entry {
   id: string
@@ -36,4 +37,33 @@ export interface CalculatorState {
   stopLoss: number
   takeProfit: number
   presets: number[]
+}
+
+export interface ExitPoint {
+  id: string
+  exitPrice: number
+  percent: number
+  originalIndex: number
+}
+
+export interface ExitScenario {
+  exitId: string
+  exitPrice: number
+  percent: number
+  avgExitPrice: number
+  volumeUSDT: number
+  volumeTicker: number
+  percentToTP: number
+  pnlAtTP: number
+  pnlAtSL: number
+  riskReward: number
+}
+
+export interface ExitPositionSummary {
+  avgExitPrice: number
+  totalVolumeTicker: number
+  totalVolumeUSDT: number
+  riskSL: number
+  profitTP: number
+  riskReward: number
 }

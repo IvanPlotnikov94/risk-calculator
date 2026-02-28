@@ -1,12 +1,31 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useCalculatorStore } from '@/stores/calculator'
+import { useExitCalculatorStore } from '@/stores/exitCalculator'
 import type { PositionDirection } from '@/types'
 
 const store = useCalculatorStore()
+const exitStore = useExitCalculatorStore()
+
+const isExitMode = computed(() => store.mode === 'exit')
 
 const handleDirectionChange = (dir: PositionDirection) => {
   store.setDirection(dir)
 }
+
+const slValidationActive = computed(() => {
+  if (isExitMode.value) {
+    return !exitStore.isStopLossValidForExit
+  }
+  return !store.isStopLossValid
+})
+
+const slValidationMessage = computed(() => {
+  if (isExitMode.value) {
+    return exitStore.stopLossExitValidationMessage
+  }
+  return store.stopLossValidationMessage
+})
 </script>
 
 <template>
@@ -58,7 +77,7 @@ const handleDirectionChange = (dir: PositionDirection) => {
         </div>
       </div>
 
-      <!-- Stop Loss -->
+      <!-- Stop Loss (shared) -->
       <div>
         <label class="block text-sm font-medium text-gray-300 mb-2">
           Стоп-лосс
@@ -69,22 +88,22 @@ const handleDirectionChange = (dir: PositionDirection) => {
           step="0.01"
           :class="[
             'w-full px-3 py-2 bg-slate-700 rounded-md text-white focus:outline-none focus:ring-2',
-            !store.isStopLossValid
+            slValidationActive
               ? 'border-2 border-yellow-500 focus:ring-yellow-500'
               : 'border border-slate-600 focus:ring-blue-500'
           ]"
         />
         <div
-          v-if="!store.isStopLossValid"
+          v-if="slValidationActive"
           class="mt-1 text-xs text-yellow-400 flex items-center gap-1"
         >
           <span>⚠️</span>
-          <span>{{ store.stopLossValidationMessage }}</span>
+          <span>{{ slValidationMessage }}</span>
         </div>
       </div>
 
-      <!-- Take Profit -->
-      <div>
+      <!-- Entry mode: Take Profit -->
+      <div v-if="!isExitMode">
         <label class="block text-sm font-medium text-gray-300 mb-2">
           Тейк-профит
         </label>
@@ -106,6 +125,34 @@ const handleDirectionChange = (dir: PositionDirection) => {
           <span>⚠️</span>
           <span>{{ store.takeProfitValidationMessage }}</span>
         </div>
+      </div>
+
+      <!-- Exit mode: Entry Price -->
+      <div v-if="isExitMode">
+        <label class="block text-sm font-medium text-gray-300 mb-2">
+          Цена входа
+        </label>
+        <input
+          v-model.number="exitStore.entryPrice"
+          type="number"
+          step="0.01"
+          class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="88000"
+        />
+      </div>
+
+      <!-- Exit mode: Total Volume -->
+      <div v-if="isExitMode">
+        <label class="block text-sm font-medium text-gray-300 mb-2">
+          Объем позиции (USDT)
+        </label>
+        <input
+          v-model.number="exitStore.totalVolume"
+          type="number"
+          step="0.01"
+          class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="1000"
+        />
       </div>
     </div>
   </div>

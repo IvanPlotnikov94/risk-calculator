@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
-import type { Entry, PositionDirection, PartialScenario, PositionSummary } from '@/types'
+import type { Entry, PositionDirection, CalculatorMode, PartialScenario, PositionSummary } from '@/types'
 
 const PRESETS_STORAGE_KEY = 'risk-calculator-presets'
 const DEFAULT_PRESETS = [50, 100, 200, 500, 1000]
@@ -22,11 +22,14 @@ const loadPresets = (): number[] => {
 }
 
 export const useCalculatorStore = defineStore('calculator', () => {
-  // State
+  // Shared state (available in both modes)
+  const mode = ref<CalculatorMode>('entry')
   const ticker = ref<string>('BTC')
   const direction = ref<PositionDirection>('long')
-  const entries = ref<Entry[]>([])
   const stopLoss = ref<number | null>(null)
+
+  // Entry-mode specific state
+  const entries = ref<Entry[]>([])
   const takeProfit = ref<number | null>(null)
   const presets = ref<number[]>(loadPresets())
 
@@ -360,12 +363,19 @@ export const useCalculatorStore = defineStore('calculator', () => {
     direction.value = newDirection
   }
 
+  const setMode = (newMode: CalculatorMode) => {
+    mode.value = newMode
+  }
+
   return {
-    // State
+    // Shared state
+    mode,
     ticker,
     direction,
-    entries,
     stopLoss,
+
+    // Entry-mode state
+    entries,
     takeProfit,
     presets,
     sortOrder,
@@ -389,6 +399,7 @@ export const useCalculatorStore = defineStore('calculator', () => {
     takeProfitValidationMessage,
     
     // Actions
+    setMode,
     addEntry,
     removeEntry,
     updateEntry,
