@@ -168,14 +168,17 @@ const handleRemove = () => {
       </span>
     </td>
 
-    <!-- PnL at SL -->
-    <td class="py-3 px-2 font-medium text-sm">
-      <span
-        v-if="scenario"
-        :class="scenario.pnlAtSL >= 0 ? 'text-green-400' : 'text-red-400'"
-      >
-        {{ formatCurrency(scenario.pnlAtSL) }}
-      </span>
+    <!-- PnL at SL (прочерк, если последний выход и 100% объёма — позиция закрыта, SL недостижим) -->
+    <td class="py-3 px-2 font-medium text-sm text-gray-400">
+      <template v-if="scenario">
+        <span
+          v-if="scenario.pnlAtSL !== undefined"
+          :class="scenario.pnlAtSL >= 0 ? 'text-green-400' : 'text-red-400'"
+        >
+          {{ formatCurrency(scenario.pnlAtSL) }}
+        </span>
+        <span v-else aria-label="Не применимо — позиция полностью закрыта на последнем TP">—</span>
+      </template>
     </td>
 
     <!-- R/R -->

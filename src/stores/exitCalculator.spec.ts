@@ -181,10 +181,14 @@ describe('Exit Calculator Store', () => {
       expect(scenarios[1].pnlAtSL).toBeCloseTo(4.78, 1)
     })
 
-    it('PnL at SL monotonically increases across exits', () => {
+    it('PnL at SL monotonically increases across exits (when defined)', () => {
       const scenarios = exitStore.exitScenarios
       for (let i = 1; i < scenarios.length; i++) {
-        expect(scenarios[i].pnlAtSL).toBeGreaterThan(scenarios[i - 1].pnlAtSL)
+        const curr = scenarios[i].pnlAtSL
+        const prev = scenarios[i - 1].pnlAtSL
+        if (curr !== undefined && prev !== undefined) {
+          expect(curr).toBeGreaterThan(prev)
+        }
       }
     })
 
@@ -290,10 +294,10 @@ describe('Exit Calculator Store', () => {
       expect(lastScenario.pnlAtTP).toBeCloseTo(summary.profitTP, 2)
     })
 
-    it('last scenario pnlAtSL equals pnlAtTP when 100% allocated (no remaining)', () => {
+    it('last scenario pnlAtSL is undefined when 100% allocated (position fully closed, SL unreachable)', () => {
       const scenarios = exitStore.exitScenarios
       const lastScenario = scenarios[scenarios.length - 1]
-      expect(lastScenario.pnlAtSL).toBeCloseTo(lastScenario.pnlAtTP, 2)
+      expect(lastScenario.pnlAtSL).toBeUndefined()
     })
 
     it('last scenario R/R equals summary R/R when fully allocated', () => {
@@ -431,8 +435,8 @@ describe('Exit Calculator Store', () => {
       expect(scenarios.length).toBe(1)
       // PnL at TP: (1000/90000) * 2000 = $22.22
       expect(scenarios[0].pnlAtTP).toBeCloseTo(22.22, 1)
-      // PnL at SL: 22.22 + (0/85000) * (85000-88000) = 22.22 (remaining = 0)
-      expect(scenarios[0].pnlAtSL).toBeCloseTo(22.22, 1)
+      // PnL at SL не рассчитывается: 100% объёма на последнем выходе — позиция закрыта
+      expect(scenarios[0].pnlAtSL).toBeUndefined()
     })
 
     it('returns empty scenarios when entry price is not set', () => {

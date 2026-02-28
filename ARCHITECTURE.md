@@ -248,11 +248,15 @@ pnlAtTP_i = Σ(j=0..i) [volumeUSDT_j / exitPrice_j × (entryPrice - exitPrice_j)
 
 ### Расчет PnL при SL (после частичного закрытия)
 
+Для всех строк, кроме последней точки выхода при 100% распределения объёма:
+
 ```typescript
 remainingVolume = totalVolume - Σ(j=0..i) volumeUSDT_j
 pnlAtSL_i = pnlAtTP_i + (remainingVolume / stopLoss) × (stopLoss - entryPrice)  // Long
 pnlAtSL_i = pnlAtTP_i + (remainingVolume / stopLoss) × (entryPrice - stopLoss)  // Short
 ```
+
+**Последняя точка выхода при 100% объёма:** если объём распределён полностью (сумма % = 100%), то для последней по порядку исполнения строки (для Long — максимальная цена выхода, для Short — минимальная) поле «PnL при SL» не рассчитывается и в интерфейсе отображается прочерк «—»: достижение последнего TP означает полный выход из позиции, Stop Loss уже недостижим.
 
 ### Расчет Risk/Reward для строки (Multiple Exit)
 

@@ -148,16 +148,23 @@ export const useExitCalculatorStore = defineStore('exitCalculator', () => {
       cumulativePnlTP += pnlAtThisExit
       cumulativeVolumeUsed += volumeUSDT
 
-      const remainingVolume = volume - cumulativeVolumeUsed
-      let pnlAtSL = cumulativePnlTP
-      if (slSet && sl > 0) {
-        let slLoss: number
-        if (dir === 'long') {
-          slLoss = (remainingVolume / sl) * (sl - entry)
-        } else {
-          slLoss = (remainingVolume / sl) * (entry - sl)
+      const isLastExitInOrder = i === ordered.length - 1
+      const pnlAtSLNotApplicable = isLastExitInOrder && isFullyAllocated.value
+
+      let pnlAtSL: number | undefined = cumulativePnlTP
+      if (!pnlAtSLNotApplicable) {
+        const remainingVolume = volume - cumulativeVolumeUsed
+        if (slSet && sl > 0) {
+          let slLoss: number
+          if (dir === 'long') {
+            slLoss = (remainingVolume / sl) * (sl - entry)
+          } else {
+            slLoss = (remainingVolume / sl) * (entry - sl)
+          }
+          pnlAtSL = cumulativePnlTP + slLoss
         }
-        pnlAtSL = cumulativePnlTP + slLoss
+      } else {
+        pnlAtSL = undefined
       }
 
       const riskReward = absOriginalRisk > 0 ? Math.abs(cumulativePnlTP) / absOriginalRisk : 0
@@ -171,7 +178,7 @@ export const useExitCalculatorStore = defineStore('exitCalculator', () => {
         volumeTicker,
         percentToTP,
         pnlAtTP: cumulativePnlTP,
-        pnlAtSL: pnlAtSL,
+        ...(pnlAtSL !== undefined && { pnlAtSL }),
         riskReward,
       })
     }

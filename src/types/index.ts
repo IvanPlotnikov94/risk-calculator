@@ -55,7 +55,8 @@ export interface ExitScenario {
   volumeTicker: number
   percentToTP: number
   pnlAtTP: number
-  pnlAtSL: number
+  /** Undefined when this is the last exit and volume is 100% allocated (SL cannot be reached) */
+  pnlAtSL?: number
   riskReward: number
 }
 
