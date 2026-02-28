@@ -103,6 +103,17 @@ export const useExitCalculatorStore = defineStore('exitCalculator', () => {
     const dir = calcStore.direction
     const ordered = executionOrderExits.value
 
+    // Original risk: full position loss at SL without any exits (used as R/R denominator)
+    let originalRisk = 0
+    if (slSet && sl > 0) {
+      if (dir === 'long') {
+        originalRisk = (volume / sl) * (sl - entry)
+      } else {
+        originalRisk = (volume / sl) * (entry - sl)
+      }
+    }
+    const absOriginalRisk = Math.abs(originalRisk)
+
     const scenarios: ExitScenario[] = []
     let cumulativePnlTP = 0
     let cumulativeVolumeUsed = 0
@@ -149,9 +160,7 @@ export const useExitCalculatorStore = defineStore('exitCalculator', () => {
         pnlAtSL = cumulativePnlTP + slLoss
       }
 
-      const absPnlTP = Math.abs(cumulativePnlTP)
-      const absPnlSL = Math.abs(pnlAtSL)
-      const riskReward = absPnlSL > 0 ? absPnlTP / absPnlSL : 0
+      const riskReward = absOriginalRisk > 0 ? Math.abs(cumulativePnlTP) / absOriginalRisk : 0
 
       scenarios.push({
         exitId: ep.id,

@@ -254,6 +254,19 @@ pnlAtSL_i = pnlAtTP_i + (remainingVolume / stopLoss) × (stopLoss - entryPrice) 
 pnlAtSL_i = pnlAtTP_i + (remainingVolume / stopLoss) × (entryPrice - stopLoss)  // Short
 ```
 
+### Расчет Risk/Reward для строки (Multiple Exit)
+
+R/R каждой строки показывает отношение зафиксированной кумулятивной прибыли к исходному риску всей позиции:
+
+```typescript
+originalRisk = (totalVolume / stopLoss) × (stopLoss - entryPrice)  // Long (отрицательный)
+R/R_i = |pnlAtTP_i| / |originalRisk|
+```
+
+Это означает:
+- R/R монотонно возрастает с каждым достигнутым выходом
+- R/R последней строки (при 100% распределении) равен R/R в сводке по позиции
+
 ### Средняя цена выхода (взвешенная)
 
 ```typescript

@@ -212,10 +212,20 @@ describe('Exit Calculator Store', () => {
       expect(scenarios[3].percentToTP).toBeCloseTo(6.82, 1)
     })
 
-    it('calculates R/R per row', () => {
+    it('calculates R/R per row using original risk as denominator', () => {
       const scenarios = exitStore.exitScenarios
-      // TP-1 R/R = |8.89| / |-12.29| = 0.72
-      expect(scenarios[0].riskReward).toBeCloseTo(0.72, 1)
+      // Original risk = (1000/85000) * (85000 - 88000) = -$35.29
+      // TP-1 R/R = |8.89| / |35.29| = 0.252
+      expect(scenarios[0].riskReward).toBeCloseTo(0.252, 2)
+      // TP-2 R/R = |17.13| / |35.29| = 0.485
+      expect(scenarios[1].riskReward).toBeCloseTo(0.485, 2)
+    })
+
+    it('R/R monotonically increases across exits', () => {
+      const scenarios = exitStore.exitScenarios
+      for (let i = 1; i < scenarios.length; i++) {
+        expect(scenarios[i].riskReward).toBeGreaterThan(scenarios[i - 1].riskReward)
+      }
     })
   })
 
@@ -277,15 +287,20 @@ describe('Exit Calculator Store', () => {
       const scenarios = exitStore.exitScenarios
       const summary = exitStore.exitPositionSummary
       const lastScenario = scenarios[scenarios.length - 1]
-      // When 100% allocated, cumulative TP profit matches summary profit
       expect(lastScenario.pnlAtTP).toBeCloseTo(summary.profitTP, 2)
     })
 
     it('last scenario pnlAtSL equals pnlAtTP when 100% allocated (no remaining)', () => {
       const scenarios = exitStore.exitScenarios
       const lastScenario = scenarios[scenarios.length - 1]
-      // With 0 remaining volume, SL scenario produces the same PnL as TP scenario
       expect(lastScenario.pnlAtSL).toBeCloseTo(lastScenario.pnlAtTP, 2)
+    })
+
+    it('last scenario R/R equals summary R/R when fully allocated', () => {
+      const scenarios = exitStore.exitScenarios
+      const summary = exitStore.exitPositionSummary
+      const lastScenario = scenarios[scenarios.length - 1]
+      expect(lastScenario.riskReward).toBeCloseTo(summary.riskReward, 4)
     })
 
     it('hasMeaningfulExitSummary is true when data is complete', () => {
