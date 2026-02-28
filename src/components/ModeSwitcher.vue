@@ -93,7 +93,7 @@ const handleKeyDown = (e: KeyboardEvent, mode: CalculatorMode) => {
           >
             <div
               v-if="hoveredTooltip === m.key"
-              class="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-64 px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-xs text-gray-300 font-normal shadow-xl z-50 leading-relaxed"
+              class="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-max max-w-sm min-w-48 px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-xs text-gray-300 font-normal shadow-xl z-50 leading-relaxed whitespace-normal break-words"
             >
               {{ m.tooltip }}
               <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900 border-l border-t border-slate-600 rotate-45" />

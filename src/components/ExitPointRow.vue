@@ -118,14 +118,13 @@ const handleRemove = () => {
           type="text"
           inputmode="decimal"
           :class="[
-            'w-24 px-2 py-1 pr-6 bg-slate-700 rounded text-white text-sm focus:outline-none focus:ring-2',
+            'w-24 px-2 py-1 bg-slate-700 rounded text-white text-sm focus:outline-none focus:ring-2',
             isPercentOverflow
               ? 'border-2 border-red-500 focus:ring-red-500'
               : 'border border-slate-600 focus:ring-blue-500'
           ]"
           :placeholder="placeholderPercent"
         />
-        <span class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">%</span>
         <div
           v-if="isPercentOverflow"
           class="absolute left-0 top-full mt-1 text-xs text-red-400 whitespace-nowrap flex items-center gap-1 z-10"
@@ -137,17 +136,17 @@ const handleRemove = () => {
     </td>
 
     <!-- Avg Exit Price -->
-    <td class="py-3 px-2 text-white font-medium text-sm">
+    <td class="py-3 px-2 text-center text-white font-medium text-sm">
       {{ scenario ? formatNumber(scenario.avgExitPrice) : '' }}
     </td>
 
     <!-- Volume USDT -->
-    <td class="py-3 px-2 text-gray-300 text-sm">
+    <td class="py-3 px-2 text-center text-gray-300 text-sm">
       {{ scenario ? formatCurrency(scenario.volumeUSDT) : '' }}
     </td>
 
     <!-- Volume Ticker -->
-    <td class="py-3 px-2 text-gray-300 text-sm">
+    <td class="py-3 px-2 text-center text-gray-300 text-sm">
       <template v-if="scenario">
         {{ formatNumber(scenario.volumeTicker, 6) }} {{ store.ticker }}
       </template>

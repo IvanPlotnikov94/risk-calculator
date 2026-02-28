@@ -79,9 +79,9 @@ const handleSort = (order: 'original' | 'asc' | 'desc') => {
             <th class="text-left py-3 px-2 text-sm font-medium text-gray-300">#</th>
             <th class="text-left py-3 px-2 text-sm font-medium text-gray-300">Цена выхода</th>
             <th class="text-left py-3 px-2 text-sm font-medium text-gray-300">% объема</th>
-            <th class="text-left py-3 px-2 text-sm font-medium text-gray-300">Ср. цена выхода</th>
-            <th class="text-left py-3 px-2 text-sm font-medium text-gray-300">Объем (USDT)</th>
-            <th class="text-left py-3 px-2 text-sm font-medium text-gray-300">Объем</th>
+            <th class="text-center py-3 px-2 text-sm font-medium text-gray-300">Ср. цена выхода</th>
+            <th class="text-center py-3 px-2 text-sm font-medium text-gray-300">Объем (USDT)</th>
+            <th class="text-center py-3 px-2 text-sm font-medium text-gray-300">Объем</th>
             <th class="text-left py-3 px-2 text-sm font-medium text-gray-300">% до TP</th>
             <th class="text-left py-3 px-2 text-sm font-medium text-gray-300">PnL при TP</th>
             <th class="text-left py-3 px-2 text-sm font-medium text-gray-300">PnL при SL</th>
