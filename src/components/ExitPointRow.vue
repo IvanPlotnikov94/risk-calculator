@@ -3,6 +3,13 @@ import { computed } from 'vue'
 import { useCalculatorStore } from '@/stores/calculator'
 import { useExitCalculatorStore } from '@/stores/exitCalculator'
 import type { ExitPoint } from '@/types'
+import {
+  parsePercent,
+  formatPercentDisplay,
+  sanitizePercentPaste,
+} from '@/utils/inputValidation'
+import { usePriceInput } from '@/composables/usePriceInput'
+import { formatNumber, formatCurrency, formatPercent } from '@/utils/formatters'
 
 const props = defineProps<{
   exitPoint: ExitPoint
@@ -12,28 +19,32 @@ const props = defineProps<{
 const store = useCalculatorStore()
 const exitStore = useExitCalculatorStore()
 
+const { priceDisplay, handlePriceKeydown, handlePriceInput, handlePricePaste } = usePriceInput(
+  () => props.exitPoint.exitPrice,
+  (value) => exitStore.updateExitPoint(props.exitPoint.id, 'exitPrice', value),
+)
+
 const scenario = computed(() => exitStore.getScenarioForExit(props.exitPoint.id))
 
 const isPriceValid = computed(() => exitStore.isExitPriceValid(props.exitPoint.id))
 
 const priceValidationMessage = computed(() => {
   if (isPriceValid.value || props.exitPoint.exitPrice <= 0) return ''
-  if (store.direction === 'long') {
-    return 'Цена выхода должна быть выше цены входа для Long'
-  }
-  return 'Цена выхода должна быть ниже цены входа для Short'
+  return store.direction === 'long'
+    ? 'Цена выхода должна быть выше цены входа для Long'
+    : 'Цена выхода должна быть ниже цены входа для Short'
 })
 
 const maxPercent = computed(() => exitStore.maxAvailablePercent(props.exitPoint.id))
 
-const isPercentOverflow = computed(() =>
-  props.exitPoint.percent > 0 && props.exitPoint.percent > maxPercent.value + 0.001
+const isPercentOverflow = computed(
+  () => props.exitPoint.percent > 0 && props.exitPoint.percent > maxPercent.value + 0.001,
 )
 
 const placeholderPercent = computed(() => {
-  if (props.index === 0 && exitStore.exitPoints.length === 1) return '1-100%'
+  if (props.index === 0 && exitStore.exitPoints.length === 1) return '0.5-100%'
   const max = Math.round(maxPercent.value * 100) / 100
-  return max > 0 ? `1-${max}%` : '0%'
+  return max > 0 ? `0.5-${max}%` : '0.5%'
 })
 
 const isRRSuspicious = computed(() => {
@@ -41,61 +52,40 @@ const isRRSuspicious = computed(() => {
   return scenario.value.riskReward > 10 || scenario.value.riskReward < 0.2
 })
 
-const formatNumber = (num: number | undefined, decimals: number = 2): string => {
-  if (num === undefined || Number.isNaN(num)) return ''
-  return num.toFixed(decimals)
+const handlePercentInput = (e: Event) => {
+  const value = parsePercent((e.target as HTMLInputElement).value)
+  exitStore.updateExitPoint(props.exitPoint.id, 'percent', value)
 }
 
-const formatCurrency = (num: number | undefined): string => {
-  if (num === undefined || Number.isNaN(num)) return ''
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(num)
+const handlePercentPaste = (e: ClipboardEvent) => {
+  e.preventDefault()
+  const value = sanitizePercentPaste(e.clipboardData?.getData('text') ?? '')
+  exitStore.updateExitPoint(props.exitPoint.id, 'percent', value)
 }
 
-const formatPercent = (num: number | undefined): string => {
-  if (num === undefined || Number.isNaN(num)) return ''
-  return num.toFixed(2) + '%'
-}
-
-const handlePriceChange = (e: Event) => {
-  const raw = (e.target as HTMLInputElement).value.replace(',', '.')
-  const value = parseFloat(raw)
-  exitStore.updateExitPoint(props.exitPoint.id, 'exitPrice', isNaN(value) ? 0 : value)
-}
-
-const handlePercentChange = (e: Event) => {
-  const raw = (e.target as HTMLInputElement).value.replace(',', '.')
-  const value = parseFloat(raw)
-  exitStore.updateExitPoint(props.exitPoint.id, 'percent', isNaN(value) ? 0 : value)
-}
-
-const handleRemove = () => {
-  exitStore.removeExitPoint(props.exitPoint.id)
-}
+const handleRemove = () => exitStore.removeExitPoint(props.exitPoint.id)
 </script>
 
 <template>
   <tr class="border-b border-slate-700 hover:bg-slate-700/50 transition-colors">
-    <!-- Index -->
     <td class="py-3 px-2 text-gray-300 text-sm">{{ index + 1 }}</td>
 
-    <!-- Exit Price -->
     <td class="py-3 px-2">
       <div class="relative">
         <input
-          :value="exitPoint.exitPrice || ''"
-          @input="handlePriceChange"
+          :value="priceDisplay"
           type="text"
           inputmode="decimal"
+          autocomplete="off"
+          aria-label="Цена выхода, от 0 до 9999999"
+          @input="handlePriceInput"
+          @keydown="handlePriceKeydown"
+          @paste="handlePricePaste"
           :class="[
             'w-28 px-2 py-1 bg-slate-700 rounded text-white text-sm focus:outline-none focus:ring-2',
             !isPriceValid && exitPoint.exitPrice > 0
               ? 'border-2 border-yellow-500 focus:ring-yellow-500'
-              : 'border border-slate-600 focus:ring-blue-500'
+              : 'border border-slate-600 focus:ring-blue-500',
           ]"
           placeholder="90000"
         />
@@ -109,19 +99,22 @@ const handleRemove = () => {
       </div>
     </td>
 
-    <!-- % Volume -->
     <td class="py-3 px-2">
       <div class="relative">
         <input
-          :value="exitPoint.percent || ''"
-          @input="handlePercentChange"
+          :value="formatPercentDisplay(exitPoint.percent) || ''"
           type="text"
           inputmode="decimal"
+          autocomplete="off"
+          aria-label="Процент объема, от 0.5 до 100"
+          @input="handlePercentInput"
+          @keydown="handlePriceKeydown"
+          @paste="handlePercentPaste"
           :class="[
             'w-24 px-2 py-1 bg-slate-700 rounded text-white text-sm focus:outline-none focus:ring-2',
             isPercentOverflow
               ? 'border-2 border-red-500 focus:ring-red-500'
-              : 'border border-slate-600 focus:ring-blue-500'
+              : 'border border-slate-600 focus:ring-blue-500',
           ]"
           :placeholder="placeholderPercent"
         />
@@ -135,29 +128,24 @@ const handleRemove = () => {
       </div>
     </td>
 
-    <!-- Avg Exit Price -->
     <td class="py-3 px-2 text-center text-white font-medium text-sm">
       {{ scenario ? formatNumber(scenario.avgExitPrice) : '' }}
     </td>
 
-    <!-- Volume USDT -->
     <td class="py-3 px-2 text-center text-gray-300 text-sm">
       {{ scenario ? formatCurrency(scenario.volumeUSDT) : '' }}
     </td>
 
-    <!-- Volume Ticker -->
     <td class="py-3 px-2 text-center text-gray-300 text-sm">
       <template v-if="scenario">
         {{ formatNumber(scenario.volumeTicker, 6) }} {{ store.ticker }}
       </template>
     </td>
 
-    <!-- % to TP -->
     <td class="py-3 px-2 text-green-400 font-medium text-sm">
       {{ scenario ? formatPercent(scenario.percentToTP) : '' }}
     </td>
 
-    <!-- PnL at TP -->
     <td class="py-3 px-2 font-medium text-sm">
       <span
         v-if="scenario"
@@ -167,7 +155,6 @@ const handleRemove = () => {
       </span>
     </td>
 
-    <!-- PnL at SL (прочерк, если последний выход и 100% объёма — позиция закрыта, SL недостижим) -->
     <td class="py-3 px-2 font-medium text-sm text-gray-400">
       <template v-if="scenario">
         <span
@@ -180,30 +167,25 @@ const handleRemove = () => {
       </template>
     </td>
 
-    <!-- R/R -->
     <td class="py-3 px-2 text-sm">
       <div v-if="scenario" class="flex items-center gap-1">
-        <span
-          :class="[
-            'font-medium',
-            isRRSuspicious ? 'text-yellow-400' : 'text-white'
-          ]"
-        >
+        <span :class="['font-medium', isRRSuspicious ? 'text-yellow-400' : 'text-white']">
           {{ formatNumber(scenario.riskReward) }}
         </span>
         <span
           v-if="isRRSuspicious"
           class="text-yellow-400 text-xs"
-          :title="scenario.riskReward > 10
-            ? 'R/R слишком высокий — проверьте данные'
-            : 'R/R слишком низкий — проверьте данные'"
+          :title="
+            scenario.riskReward > 10
+              ? 'R/R слишком высокий — проверьте данные'
+              : 'R/R слишком низкий — проверьте данные'
+          "
         >
           ⚠️
         </span>
       </div>
     </td>
 
-    <!-- Remove -->
     <td class="py-3 px-2">
       <button
         @click="handleRemove"
