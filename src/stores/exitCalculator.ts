@@ -1,7 +1,27 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useCalculatorStore } from './calculator'
-import type { ExitPoint, ExitScenario, ExitPositionSummary } from '@/types'
+import type { ExitPoint, ExitScenario, ExitPositionSummary, ExitAutoCalculateParams } from '@/types'
+
+const MIN_POINTS_COUNT = 2
+const MAX_POINTS_COUNT = 10
+
+const roundTo = (value: number, decimals = 2) => {
+  const multiplier = 10 ** decimals
+  return Math.round(value * multiplier) / multiplier
+}
+
+const normalizePercents = (percents: number[]) => {
+  const sum = percents.reduce((acc, value) => acc + value, 0)
+  if (sum <= 0) return []
+  return percents.map((value) => (value / sum) * 100)
+}
+
+const interpolateValues = (from: number, to: number, pointsCount: number) => {
+  if (pointsCount <= 1) return [from]
+  const step = (to - from) / (pointsCount - 1)
+  return Array.from({ length: pointsCount }, (_, index) => from + step * index)
+}
 
 export const useExitCalculatorStore = defineStore('exitCalculator', () => {
   const calcStore = useCalculatorStore()
@@ -303,6 +323,45 @@ export const useExitCalculatorStore = defineStore('exitCalculator', () => {
     sortOrder.value = order
   }
 
+  const replaceExitPoints = (nextExitPoints: ExitPoint[]) => {
+    exitPoints.value = nextExitPoints.map((exitPoint, index) => ({
+      ...exitPoint,
+      originalIndex: index,
+    }))
+    sortOrder.value = 'original'
+  }
+
+  const calculateExitsFromRisk = (params: ExitAutoCalculateParams) => {
+    const safeCount = Math.min(Math.max(Math.trunc(params.exitsCount), MIN_POINTS_COUNT), MAX_POINTS_COUNT)
+    const normalizedPercents = normalizePercents(params.distributionPercents)
+    if (normalizedPercents.length !== safeCount) return false
+
+    const stopDistance = Math.abs(params.stopLoss - params.entryPrice)
+    if (stopDistance <= 0 || params.stopLoss <= 0) return false
+
+    const totalVolumeByRisk = (params.riskUSDT * params.stopLoss) / stopDistance
+    if (!Number.isFinite(totalVolumeByRisk) || totalVolumeByRisk <= 0) return false
+
+    const exitPrices = interpolateValues(params.priceFrom, params.priceTo, safeCount)
+    const nextExitPoints: ExitPoint[] = exitPrices.map((price, index) => ({
+      id: crypto.randomUUID(),
+      exitPrice: roundTo(price, 4),
+      percent: roundTo(normalizedPercents[index], 2),
+      originalIndex: index,
+    }))
+
+    const percentDiff = 100 - nextExitPoints.reduce((acc, exitPoint) => acc + exitPoint.percent, 0)
+    if (Math.abs(percentDiff) > 0.001) {
+      nextExitPoints[safeCount - 1].percent = roundTo(nextExitPoints[safeCount - 1].percent + percentDiff, 2)
+    }
+
+    calcStore.stopLoss = params.stopLoss
+    entryPrice.value = params.entryPrice
+    totalVolume.value = roundTo(totalVolumeByRisk, 2)
+    replaceExitPoints(nextExitPoints)
+    return true
+  }
+
   return {
     // State
     entryPrice,
@@ -335,5 +394,7 @@ export const useExitCalculatorStore = defineStore('exitCalculator', () => {
     updateExitPoint,
     setSortOrder,
     getScenarioForExit,
+    replaceExitPoints,
+    calculateExitsFromRisk,
   }
 })

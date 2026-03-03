@@ -68,3 +68,25 @@ export interface ExitPositionSummary {
   profitTP: number
   riskReward: number
 }
+
+export type DistributionMode = 'manual' | 'linear'
+
+export interface EntryAutoCalculateParams {
+  riskUSDT: number
+  entriesCount: number
+  priceFrom: number
+  priceTo: number
+  stopLoss: number
+  takeProfit: number
+  distributionPercents: number[]
+}
+
+export interface ExitAutoCalculateParams {
+  riskUSDT: number
+  exitsCount: number
+  priceFrom: number
+  priceTo: number
+  stopLoss: number
+  entryPrice: number
+  distributionPercents: number[]
+}

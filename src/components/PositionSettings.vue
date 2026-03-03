@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useCalculatorStore } from '@/stores/calculator'
 import { useExitCalculatorStore } from '@/stores/exitCalculator'
 import type { PositionDirection } from '@/types'
+import MagicPositionModal from './MagicPositionModal.vue'
 
 const store = useCalculatorStore()
 const exitStore = useExitCalculatorStore()
@@ -26,15 +27,21 @@ const slValidationMessage = computed(() => {
   }
   return store.stopLossValidationMessage
 })
+
+const isMagicModalOpen = ref(false)
+
+const handleOpenMagicModal = () => {
+  isMagicModalOpen.value = true
+}
 </script>
 
 <template>
   <div class="bg-slate-800 rounded-lg p-6 shadow-xl">
     <h2 class="text-xl font-semibold text-white mb-4">Настройки позиции</h2>
-    
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+
+    <div class="flex flex-wrap items-end gap-4">
       <!-- Ticker -->
-      <div>
+      <div class="w-full md:w-[170px]">
         <label class="block text-sm font-medium text-gray-300 mb-2">
           Тикер
         </label>
@@ -47,7 +54,7 @@ const slValidationMessage = computed(() => {
       </div>
 
       <!-- Direction -->
-      <div>
+      <div class="w-full md:w-[220px]">
         <label class="block text-sm font-medium text-gray-300 mb-2">
           Направление
         </label>
@@ -78,7 +85,7 @@ const slValidationMessage = computed(() => {
       </div>
 
       <!-- Stop Loss (shared) -->
-      <div>
+      <div class="w-full md:w-[180px]">
         <label class="block text-sm font-medium text-gray-300 mb-2">
           Стоп-лосс
         </label>
@@ -103,7 +110,7 @@ const slValidationMessage = computed(() => {
       </div>
 
       <!-- Entry mode: Take Profit -->
-      <div v-if="!isExitMode">
+      <div v-if="!isExitMode" class="w-full md:w-[180px]">
         <label class="block text-sm font-medium text-gray-300 mb-2">
           Тейк-профит
         </label>
@@ -127,8 +134,23 @@ const slValidationMessage = computed(() => {
         </div>
       </div>
 
+      <button
+        v-if="!isExitMode"
+        type="button"
+        class="group relative h-[42px] w-full md:w-auto md:min-w-[220px] rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-fuchsia-500 px-4 py-2 font-semibold text-white shadow-[0_0_16px_rgba(56,189,248,0.35)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_22px_rgba(217,70,239,0.45)] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-fuchsia-400"
+        aria-label="Открыть модальное окно расчета позиции"
+        tabindex="0"
+        @click="handleOpenMagicModal"
+      >
+        <span class="absolute inset-0 rounded-xl border border-white/20" />
+        <span class="relative flex items-center justify-center gap-2 text-sm">
+          <span class="drop-shadow-[0_0_6px_rgba(255,255,255,0.75)]">✨</span>
+          <span>Рассчитать позицию</span>
+        </span>
+      </button>
+
       <!-- Exit mode: Entry Price -->
-      <div v-if="isExitMode">
+      <div v-if="isExitMode" class="w-full md:w-[180px]">
         <label class="block text-sm font-medium text-gray-300 mb-2">
           Цена входа
         </label>
@@ -142,7 +164,7 @@ const slValidationMessage = computed(() => {
       </div>
 
       <!-- Exit mode: Total Volume -->
-      <div v-if="isExitMode">
+      <div v-if="isExitMode" class="w-full md:w-[180px]">
         <label class="block text-sm font-medium text-gray-300 mb-2">
           Объем позиции (USDT)
         </label>
@@ -154,6 +176,26 @@ const slValidationMessage = computed(() => {
           placeholder="1000"
         />
       </div>
+
+      <button
+        v-if="isExitMode"
+        type="button"
+        class="group relative h-[42px] w-full md:w-auto md:min-w-[220px] rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-fuchsia-500 px-4 py-2 font-semibold text-white shadow-[0_0_16px_rgba(56,189,248,0.35)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_22px_rgba(217,70,239,0.45)] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-fuchsia-400"
+        aria-label="Открыть модальное окно расчета позиции"
+        tabindex="0"
+        @click="handleOpenMagicModal"
+      >
+        <span class="absolute inset-0 rounded-xl border border-white/20" />
+        <span class="relative flex items-center justify-center gap-2 text-sm">
+          <span class="drop-shadow-[0_0_6px_rgba(255,255,255,0.75)]">✨</span>
+          <span>Рассчитать позицию</span>
+        </span>
+      </button>
     </div>
   </div>
+
+  <MagicPositionModal
+    v-model="isMagicModalOpen"
+    :mode="store.mode"
+  />
 </template>

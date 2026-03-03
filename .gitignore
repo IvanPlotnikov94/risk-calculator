@@ -45,6 +45,9 @@ GIT_SETUP.md
 MANUAL_GIT_SETUP.md
 init-git.ps1
 
+# Business and Technical specifications
+docs/*
+
 # AI files
 .agents/**/LICENSE.txt
 

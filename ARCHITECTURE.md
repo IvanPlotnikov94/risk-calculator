@@ -26,6 +26,7 @@ risk-calculator/
 │   │   ├── CalculatorView.vue       # Главный view (маршрутизация режимов)
 │   │   ├── ModeSwitcher.vue         # Переключатель Entry/Exit режимов
 │   │   ├── PositionSettings.vue     # Настройки позиции (mode-aware)
+│   │   ├── MagicPositionModal.vue   # Общий модал авторасчета позиции по риску
 │   │   ├── PositionSummaryCard.vue  # Сводка — режим Entry
 │   │   ├── EntriesTable.vue         # Таблица входов — режим Entry
 │   │   ├── EntryRow.vue             # Строка входа — режим Entry
@@ -73,6 +74,14 @@ risk-calculator/
 - Тикер, Направление, Стоп-лосс — общие для обоих режимов
 - Тейк-профит — только Entry режим
 - Цена входа, Объем позиции — только Exit режим
+- Кнопка **"Рассчитать позицию"** для открытия модального окна авторасчета
+
+### MagicPositionModal
+Общий модальный компонент для режимов Entry/Exit:
+- Поля риска, количества точек, диапазона цен, режима распределения (ручной/линейный)
+- Валидация полей через Zod + правила бизнес-логики Long/Short
+- Сохранение черновика формы в localStorage по ключам режима
+- Запуск actions стора для автозаполнения таблиц входов/выходов
 
 ### PositionSummaryCard
 Отображает сводную информацию по всей позиции (режим Entry):
@@ -123,6 +132,8 @@ SVG-диаграмма (donut chart) показывающая распредел
 - `addEntry()` - добавить новый вход
 - `removeEntry(id)` - удалить вход
 - `updateEntry(id, field, value)` - обновить поле входа
+- `replaceEntries(entries)` - заменить массив входов целиком (для автозаполнения)
+- `calculateEntriesFromRisk(params)` - рассчитать входы по риску, диапазону и распределению
 - `applyPreset(entryId, value)` - применить пресет
 - `setSortOrder(order)` - изменить сортировку
 - `setDirection(direction)` - изменить направление
@@ -150,6 +161,8 @@ SVG-диаграмма (donut chart) показывающая распредел
 - `addExitPoint()` - добавить точку выхода
 - `removeExitPoint(id)` - удалить точку выхода
 - `updateExitPoint(id, field, value)` - обновить поле выхода
+- `replaceExitPoints(exitPoints)` - заменить массив выходов целиком (для автозаполнения)
+- `calculateExitsFromRisk(params)` - рассчитать выходы и объем позиции по целевому риску
 - `setSortOrder(order)` - изменить сортировку
 
 ## Логика расчетов

@@ -1,10 +1,19 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
-import type { Entry, PositionDirection, CalculatorMode, PartialScenario, PositionSummary } from '@/types'
+import type {
+  Entry,
+  PositionDirection,
+  CalculatorMode,
+  PartialScenario,
+  PositionSummary,
+  EntryAutoCalculateParams,
+} from '@/types'
 
 const PRESETS_STORAGE_KEY = 'risk-calculator-presets'
 const DEFAULT_PRESETS = [50, 100, 200, 500, 1000]
 const MAX_PRESETS_LENGTH = 20
+const MIN_POINTS_COUNT = 2
+const MAX_POINTS_COUNT = 10
 
 const loadPresets = (): number[] => {
   try {
@@ -19,6 +28,23 @@ const loadPresets = (): number[] => {
   } catch {
     return [...DEFAULT_PRESETS]
   }
+}
+
+const roundTo = (value: number, decimals = 2) => {
+  const multiplier = 10 ** decimals
+  return Math.round(value * multiplier) / multiplier
+}
+
+const normalizePercents = (percents: number[]) => {
+  const sum = percents.reduce((acc, value) => acc + value, 0)
+  if (sum <= 0) return []
+  return percents.map((value) => value / sum)
+}
+
+const interpolateValues = (from: number, to: number, pointsCount: number) => {
+  if (pointsCount <= 1) return [from]
+  const step = (to - from) / (pointsCount - 1)
+  return Array.from({ length: pointsCount }, (_, index) => from + step * index)
 }
 
 export const useCalculatorStore = defineStore('calculator', () => {
@@ -367,6 +393,54 @@ export const useCalculatorStore = defineStore('calculator', () => {
     mode.value = newMode
   }
 
+  const replaceEntries = (nextEntries: Entry[]) => {
+    entries.value = nextEntries.map((entry, index) => ({
+      ...entry,
+      originalIndex: index,
+    }))
+    sortOrder.value = 'original'
+  }
+
+  const calculateEntriesFromRisk = (params: EntryAutoCalculateParams) => {
+    const safeCount = Math.min(Math.max(Math.trunc(params.entriesCount), MIN_POINTS_COUNT), MAX_POINTS_COUNT)
+    const normalizedWeights = normalizePercents(params.distributionPercents)
+    if (normalizedWeights.length !== safeCount) return false
+
+    const entryPrices = interpolateValues(params.priceFrom, params.priceTo, safeCount)
+    const denominator = normalizedWeights.reduce((acc, weight, index) => {
+      const currentPrice = entryPrices[index]
+      if (!Number.isFinite(currentPrice) || currentPrice <= 0) return acc
+      return acc + weight / currentPrice
+    }, 0)
+
+    if (denominator <= 0) return false
+
+    const averagePrice = 1 / denominator
+    if (!Number.isFinite(averagePrice) || averagePrice <= 0) return false
+
+    const directionMultiplier = direction.value === 'long'
+      ? Math.abs(params.stopLoss - averagePrice)
+      : Math.abs(averagePrice - params.stopLoss)
+
+    const riskPerOneUSDT = directionMultiplier * denominator
+    if (!Number.isFinite(riskPerOneUSDT) || riskPerOneUSDT <= 0) return false
+
+    const totalAmount = params.riskUSDT / riskPerOneUSDT
+    if (!Number.isFinite(totalAmount) || totalAmount <= 0) return false
+
+    const nextEntries = entryPrices.map((price, index) => ({
+      id: crypto.randomUUID(),
+      price: roundTo(price, 4),
+      amount: roundTo(totalAmount * normalizedWeights[index], 4),
+      originalIndex: index,
+    }))
+
+    stopLoss.value = params.stopLoss
+    takeProfit.value = params.takeProfit
+    replaceEntries(nextEntries)
+    return true
+  }
+
   return {
     // Shared state
     mode,
@@ -407,5 +481,7 @@ export const useCalculatorStore = defineStore('calculator', () => {
     setSortOrder,
     setDirection,
     getScenarioForEntry,
+    replaceEntries,
+    calculateEntriesFromRisk,
   }
 })
