@@ -39,9 +39,9 @@ const handleOpenMagicModal = () => {
   <div class="bg-slate-800 rounded-lg p-6 shadow-xl">
     <h2 class="text-xl font-semibold text-white mb-4">Настройки позиции</h2>
 
-    <div class="flex flex-wrap items-end gap-4">
+    <div class="flex flex-wrap items-end gap-4 md:gap-6 md:justify-between">
       <!-- Ticker -->
-      <div class="w-full md:w-[170px]">
+      <div class="w-full md:flex-1 md:min-w-[150px]">
         <label class="block text-sm font-medium text-gray-300 mb-2">
           Тикер
         </label>
@@ -54,7 +54,7 @@ const handleOpenMagicModal = () => {
       </div>
 
       <!-- Direction -->
-      <div class="w-full md:w-[220px]">
+      <div class="w-full md:flex-1 md:min-w-[200px]">
         <label class="block text-sm font-medium text-gray-300 mb-2">
           Направление
         </label>
@@ -85,7 +85,7 @@ const handleOpenMagicModal = () => {
       </div>
 
       <!-- Stop Loss (shared) -->
-      <div class="w-full md:w-[180px]">
+      <div class="w-full md:flex-1 md:min-w-[160px]">
         <label class="block text-sm font-medium text-gray-300 mb-2">
           Стоп-лосс
         </label>
@@ -110,7 +110,7 @@ const handleOpenMagicModal = () => {
       </div>
 
       <!-- Entry mode: Take Profit -->
-      <div v-if="!isExitMode" class="w-full md:w-[180px]">
+      <div v-if="!isExitMode" class="w-full md:flex-1 md:min-w-[160px]">
         <label class="block text-sm font-medium text-gray-300 mb-2">
           Тейк-профит
         </label>
@@ -137,7 +137,7 @@ const handleOpenMagicModal = () => {
       <button
         v-if="!isExitMode"
         type="button"
-        class="group relative h-[42px] w-full md:w-auto md:min-w-[220px] rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-fuchsia-500 px-4 py-2 font-semibold text-white shadow-[0_0_16px_rgba(56,189,248,0.35)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_22px_rgba(217,70,239,0.45)] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-fuchsia-400"
+        class="group relative h-[42px] w-full md:w-auto md:min-w-[220px] md:mx-auto xl:mx-0 xl:ml-auto rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-fuchsia-500 px-4 py-2 font-semibold text-white shadow-[0_0_16px_rgba(56,189,248,0.35)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_22px_rgba(217,70,239,0.45)] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-fuchsia-400"
         aria-label="Открыть модальное окно расчета позиции"
         tabindex="0"
         @click="handleOpenMagicModal"
@@ -150,7 +150,7 @@ const handleOpenMagicModal = () => {
       </button>
 
       <!-- Exit mode: Entry Price -->
-      <div v-if="isExitMode" class="w-full md:w-[180px]">
+      <div v-if="isExitMode" class="w-full md:flex-1 md:min-w-[160px]">
         <label class="block text-sm font-medium text-gray-300 mb-2">
           Цена входа
         </label>
@@ -164,7 +164,7 @@ const handleOpenMagicModal = () => {
       </div>
 
       <!-- Exit mode: Total Volume -->
-      <div v-if="isExitMode" class="w-full md:w-[180px]">
+      <div v-if="isExitMode" class="w-full md:flex-1 md:min-w-[160px]">
         <label class="block text-sm font-medium text-gray-300 mb-2">
           Объем позиции (USDT)
         </label>
@@ -180,7 +180,7 @@ const handleOpenMagicModal = () => {
       <button
         v-if="isExitMode"
         type="button"
-        class="group relative h-[42px] w-full md:w-auto md:min-w-[220px] rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-fuchsia-500 px-4 py-2 font-semibold text-white shadow-[0_0_16px_rgba(56,189,248,0.35)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_22px_rgba(217,70,239,0.45)] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-fuchsia-400"
+        class="group relative h-[42px] w-full md:w-auto md:min-w-[220px] md:mx-auto xl:mx-0 xl:ml-auto rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-fuchsia-500 px-4 py-2 font-semibold text-white shadow-[0_0_16px_rgba(56,189,248,0.35)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_22px_rgba(217,70,239,0.45)] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-fuchsia-400"
         aria-label="Открыть модальное окно расчета позиции"
         tabindex="0"
         @click="handleOpenMagicModal"
