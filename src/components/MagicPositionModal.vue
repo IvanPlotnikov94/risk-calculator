@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, reactive, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { z } from 'zod'
 import { useCalculatorStore } from '@/stores/calculator'
 import { useExitCalculatorStore } from '@/stores/exitCalculator'
@@ -10,7 +10,6 @@ import {
   MAGIC_MODAL_UI_TEXT,
   buildLinearPercents,
   formatDecimal,
-  getRangeBoundaryHint,
   parseDecimal,
   sanitizeDecimalInput,
   validateRangeByScenario,
@@ -73,6 +72,8 @@ const form = reactive<MagicModalForm>({
 })
 
 const errorMap = reactive<Record<string, string>>({})
+const warningMap = reactive<Record<string, string>>({})
+const isLiveValidationEnabled = ref(false)
 
 const baseSchema = z.object({
   riskUSDT: z.number().min(MAGIC_MODAL_LIMITS.minRisk).max(MAGIC_MODAL_LIMITS.maxRisk),
@@ -98,6 +99,15 @@ const normalizeManualPercents = () => {
   if (form.manualPercents.length > form.pointsCount) form.manualPercents.splice(form.pointsCount)
 }
 
+const setEqualManualPercents = () => {
+  if (form.pointsCount <= 0) return
+  const percents = buildLinearPercents(form.pointsCount, 1)
+  form.manualPercents = percents.map((percent) => {
+    const fixed = percent.toFixed(2)
+    return fixed.replace(/\.?0+$/, '')
+  })
+}
+
 const manualPercentNumbers = computed(() => form.manualPercents.map((item) => parseDecimal(item)))
 const manualPercentSum = computed(() =>
   manualPercentNumbers.value.reduce((sum, value) => sum + (Number.isFinite(value) ? value : 0), 0),
@@ -106,13 +116,9 @@ const manualPercentRemaining = computed(() => 100 - manualPercentSum.value)
 
 const linearPreviewPercents = computed(() => buildLinearPercents(form.pointsCount, form.linearCoefficient))
 
-const toBoundaryHint = computed(() => {
-  const from = parseDecimal(form.priceFrom)
-  return getRangeBoundaryHint(props.mode, modeDirection.value, from, form.pointsCount)
-})
-
 const clearErrors = () => {
   Object.keys(errorMap).forEach((key) => delete errorMap[key])
+  Object.keys(warningMap).forEach((key) => delete warningMap[key])
 }
 
 const parseFormNumericValues = () => ({
@@ -125,15 +131,26 @@ const parseFormNumericValues = () => ({
   linearCoefficient: form.linearCoefficient,
 })
 
-const assignFallbackErrors = () => {
-  if (!errorMap.riskUSDT) errorMap.riskUSDT = 'Риск должен быть от 1 до 999999 USDT'
-  if (!errorMap.priceFrom) errorMap.priceFrom = 'Укажите корректную цену "От"'
-  if (!errorMap.priceTo) errorMap.priceTo = 'Укажите корректную цену "До"'
-  if (!errorMap.stopLoss) errorMap.stopLoss = 'Укажите корректный стоп-лосс'
-  if (!errorMap.secondaryPrice) errorMap.secondaryPrice = 'Укажите корректное значение'
+const validateRequiredFields = (): boolean => {
+  let valid = true
+  const requiredStringFields: Array<{ key: keyof Pick<MagicModalForm, 'riskUSDT' | 'priceFrom' | 'priceTo' | 'stopLoss' | 'secondaryPrice'>; label: string }> = [
+    { key: 'riskUSDT', label: 'Пожалуйста, заполните поле' },
+    { key: 'priceFrom', label: 'Пожалуйста, заполните поле' },
+    { key: 'priceTo', label: 'Пожалуйста, заполните поле' },
+    { key: 'stopLoss', label: 'Пожалуйста, заполните поле' },
+    { key: 'secondaryPrice', label: 'Пожалуйста, заполните поле' },
+  ]
+  for (const { key, label } of requiredStringFields) {
+    if (!form[key].trim()) {
+      errorMap[key] = label
+      valid = false
+    }
+  }
+  return valid
 }
 
 const validateManualDistribution = () => {
+  delete errorMap.manualPercents
   if (form.distributionMode !== 'manual') return
 
   const invalidPercentIndex = manualPercentNumbers.value.findIndex(
@@ -151,19 +168,25 @@ const validateManualDistribution = () => {
 
 const validate = () => {
   clearErrors()
+
+  if (!validateRequiredFields()) return false
+
   const numericValues = parseFormNumericValues()
   const parsed = baseSchema.safeParse(numericValues)
 
   if (!parsed.success) {
     parsed.error.issues.forEach((issue) => {
       const path = issue.path[0]
-      if (typeof path === 'string' && !errorMap[path]) errorMap[path] = 'Заполните поле корректно'
+      if (typeof path !== 'string' || errorMap[path]) return
+      errorMap[path] = path === 'riskUSDT'
+        ? 'Риск должен быть от 1 до 999999 USDT'
+        : 'Заполните поле корректно'
     })
-    assignFallbackErrors()
     return false
   }
 
   validateManualDistribution()
+  if (errorMap.manualPercents) return false
 
   const rangeIssues = validateRangeByScenario(props.mode, modeDirection.value, {
     priceFrom: parsed.data.priceFrom,
@@ -172,11 +195,16 @@ const validate = () => {
     secondaryPrice: parsed.data.secondaryPrice,
     pointsCount: parsed.data.pointsCount,
   })
+
   rangeIssues.forEach((issue) => {
-    if (!errorMap[issue.field]) errorMap[issue.field] = issue.message
+    if (issue.type === 'warning') {
+      if (!warningMap[issue.field]) warningMap[issue.field] = issue.message
+    } else {
+      if (!errorMap[issue.field]) errorMap[issue.field] = issue.message
+    }
   })
 
-  return Object.keys(errorMap).length === 0
+  return Object.keys(errorMap).length === 0 && Object.keys(warningMap).length === 0
 }
 
 const getDistributionPercents = () =>
@@ -246,6 +274,9 @@ const handleDecimalFieldInput = (field: PrimaryFieldKey, event: Event) => {
   const sanitized = sanitizeDecimalInput(input.value)
   form[field] = sanitized
   input.value = sanitized
+  if (isLiveValidationEnabled.value) {
+    validate()
+  }
 }
 
 const handleManualPercentInput = (index: number, event: Event) => {
@@ -253,6 +284,10 @@ const handleManualPercentInput = (index: number, event: Event) => {
   const sanitized = sanitizeDecimalInput(input.value, 2)
   form.manualPercents[index] = sanitized
   input.value = sanitized
+  validateManualDistribution()
+  if (isLiveValidationEnabled.value) {
+    validate()
+  }
 }
 
 const saveDraft = () => {
@@ -295,6 +330,7 @@ const syncPrimaryFields = () => {
 }
 
 const handleCalculate = () => {
+  isLiveValidationEnabled.value = true
   if (!validate()) return
 
   const calculator = MODE_CALCULATORS[props.mode]
@@ -326,15 +362,31 @@ watch(
     }
     if (value < MAGIC_MODAL_LIMITS.minPoints) form.pointsCount = MAGIC_MODAL_LIMITS.minPoints
     if (value > MAGIC_MODAL_LIMITS.maxPoints) form.pointsCount = MAGIC_MODAL_LIMITS.maxPoints
-    normalizeManualPercents()
+    if (form.distributionMode === 'manual') {
+      setEqualManualPercents()
+    } else {
+      normalizeManualPercents()
+    }
+    validateManualDistribution()
   },
   { immediate: true },
+)
+
+watch(
+  () => form.distributionMode,
+  (mode) => {
+    if (mode === 'manual') {
+      setEqualManualPercents()
+    }
+    validateManualDistribution()
+  },
 )
 
 watch(
   () => props.modelValue,
   (isOpen) => {
     clearErrors()
+    isLiveValidationEnabled.value = false
     if (!isOpen) return
     loadDraft()
     syncPrimaryFields()
@@ -354,6 +406,7 @@ watch(
   () => props.mode,
   () => {
     clearErrors()
+    isLiveValidationEnabled.value = false
     loadDraft()
     syncPrimaryFields()
     normalizeManualPercents()
@@ -427,7 +480,8 @@ onBeforeUnmount(() => {
                   type="text"
                   inputmode="decimal"
                   placeholder="100"
-                  class="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-white outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/40"
+                  class="w-full rounded-lg border bg-slate-800 px-3 py-2 text-white outline-none transition focus:ring-2"
+                  :class="errorMap.riskUSDT ? 'border-red-500 focus:border-red-400 focus:ring-red-500/40' : 'border-slate-700 focus:border-cyan-400 focus:ring-cyan-500/40'"
                   @input="handleDecimalFieldInput('riskUSDT', $event)"
                   @keydown="handleDecimalKeydown($event, form.riskUSDT)"
                 />
@@ -471,29 +525,37 @@ onBeforeUnmount(() => {
               <div>
                 <label class="mb-1 block text-sm font-medium text-slate-200">{{ rangeLabel }}</label>
                 <div class="grid grid-cols-2 gap-2">
-                  <input
-                    :value="form.priceFrom"
-                    type="text"
-                    inputmode="decimal"
-                    placeholder="От"
-                    class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-white outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/40"
-                    @input="handleDecimalFieldInput('priceFrom', $event)"
-                    @keydown="handleDecimalKeydown($event, form.priceFrom)"
-                  />
-                  <input
-                    :value="form.priceTo"
-                    type="text"
-                    inputmode="decimal"
-                    placeholder="До"
-                    class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-white outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/40"
-                    @input="handleDecimalFieldInput('priceTo', $event)"
-                    @keydown="handleDecimalKeydown($event, form.priceTo)"
-                  />
+                  <div>
+                    <input
+                      :value="form.priceFrom"
+                      type="text"
+                      inputmode="decimal"
+                      placeholder="От"
+                      class="w-full rounded-lg border bg-slate-800 px-3 py-2 text-white outline-none transition focus:ring-2"
+                      :class="errorMap.priceFrom ? 'border-red-500 focus:border-red-400 focus:ring-red-500/40' : 'border-slate-700 focus:border-cyan-400 focus:ring-cyan-500/40'"
+                      @input="handleDecimalFieldInput('priceFrom', $event)"
+                      @keydown="handleDecimalKeydown($event, form.priceFrom)"
+                    />
+                    <p v-if="errorMap.priceFrom" class="mt-1 text-xs text-red-400">{{ errorMap.priceFrom }}</p>
+                    <p v-else-if="warningMap.priceFrom" class="mt-1 text-xs text-yellow-400">{{ warningMap.priceFrom }}</p>
+                  </div>
+                  <div>
+                    <input
+                      :value="form.priceTo"
+                      type="text"
+                      inputmode="decimal"
+                      placeholder="До"
+                      class="w-full rounded-lg border bg-slate-800 px-3 py-2 text-white outline-none transition focus:ring-2"
+                      :class="errorMap.priceTo ? 'border-red-500 focus:border-red-400 focus:ring-red-500/40' : warningMap.priceTo ? 'border-yellow-500 focus:border-yellow-400 focus:ring-yellow-500/40' : 'border-slate-700 focus:border-cyan-400 focus:ring-cyan-500/40'"
+                      @input="handleDecimalFieldInput('priceTo', $event)"
+                      @keydown="handleDecimalKeydown($event, form.priceTo)"
+                    />
+                    <p v-if="errorMap.priceTo" class="mt-1 text-xs text-red-400">{{ errorMap.priceTo }}</p>
+                    <p v-else-if="warningMap.priceTo" class="mt-1 text-xs text-yellow-400">{{ warningMap.priceTo }}</p>
+                  </div>
                 </div>
-                <p class="mt-1 text-xs text-slate-400">{{ toBoundaryHint }}</p>
                 <p v-if="errorMap.priceRange" class="mt-1 text-xs text-red-400">{{ errorMap.priceRange }}</p>
-                <p v-if="errorMap.priceFrom" class="mt-1 text-xs text-red-400">{{ errorMap.priceFrom }}</p>
-                <p v-if="errorMap.priceTo" class="mt-1 text-xs text-red-400">{{ errorMap.priceTo }}</p>
+                <p v-else-if="warningMap.priceRange" class="mt-1 text-xs text-yellow-400">{{ warningMap.priceRange }}</p>
               </div>
 
               <div>
@@ -612,7 +674,8 @@ onBeforeUnmount(() => {
                     type="text"
                     inputmode="decimal"
                     placeholder="65000"
-                    class="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-white outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/40"
+                    class="w-full rounded-lg border bg-slate-800 px-3 py-2 text-white outline-none transition focus:ring-2"
+                    :class="errorMap.stopLoss ? 'border-red-500 focus:border-red-400 focus:ring-red-500/40' : 'border-slate-700 focus:border-cyan-400 focus:ring-cyan-500/40'"
                     @input="handleDecimalFieldInput('stopLoss', $event)"
                     @keydown="handleDecimalKeydown($event, form.stopLoss)"
                   />
@@ -625,7 +688,8 @@ onBeforeUnmount(() => {
                     type="text"
                     inputmode="decimal"
                     :placeholder="secondaryPlaceholder"
-                    class="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-white outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/40"
+                    class="w-full rounded-lg border bg-slate-800 px-3 py-2 text-white outline-none transition focus:ring-2"
+                    :class="errorMap.secondaryPrice ? 'border-red-500 focus:border-red-400 focus:ring-red-500/40' : 'border-slate-700 focus:border-cyan-400 focus:ring-cyan-500/40'"
                     @input="handleDecimalFieldInput('secondaryPrice', $event)"
                     @keydown="handleDecimalKeydown($event, form.secondaryPrice)"
                   />

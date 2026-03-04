@@ -55,10 +55,12 @@ export interface MagicRangeValues {
 }
 
 export type MagicErrorField = 'priceRange' | 'priceFrom' | 'priceTo'
+export type MagicIssueType = 'error' | 'warning'
 
 export interface MagicValidationIssue {
   field: MagicErrorField
   message: string
+  type: MagicIssueType
 }
 
 interface MagicRangeRuleContext {
@@ -75,18 +77,22 @@ interface MagicRangeRuleSet {
   checks: MagicRangeCheck[]
 }
 
-const makeIssue = (field: MagicErrorField, message: string): MagicValidationIssue => ({ field, message })
+const makeIssue = (
+  field: MagicErrorField,
+  message: string,
+  type: MagicIssueType = 'error',
+): MagicValidationIssue => ({ field, message, type })
 
 const getDelta = (priceFrom: number, pointsCount: number) => priceFrom * 0.001 * pointsCount
 
 const RULES_BY_SCENARIO: Record<MagicScenarioKey, MagicRangeRuleSet> = {
   'entry:long': {
-    boundaryType: 'min',
+    boundaryType: 'max',
     checks: [
       ({ values }) =>
-        values.priceFrom < values.priceTo
+        values.priceFrom > values.priceTo
           ? undefined
-          : makeIssue('priceRange', 'Для Long цена "От" должна быть ниже цены "До"'),
+          : makeIssue('priceRange', 'Для Long цена "От" должна быть выше цены "До"'),
       ({ values }) =>
         values.priceFrom < values.secondaryPrice
           ? undefined
@@ -100,18 +106,18 @@ const RULES_BY_SCENARIO: Record<MagicScenarioKey, MagicRangeRuleSet> = {
           ? undefined
           : makeIssue('priceTo', 'Цена "До" должна быть выше стоп-лосса'),
       ({ values, boundary }) =>
-        values.priceTo >= boundary
+        values.priceTo <= boundary
           ? undefined
-          : makeIssue('priceTo', `Диапазон мал: минимум "До" ${boundary.toFixed(2)}`),
+          : makeIssue('priceTo', `Укажите корректную цену. Максимум ${boundary.toFixed(2)}`, 'warning'),
     ],
   },
   'entry:short': {
-    boundaryType: 'max',
+    boundaryType: 'min',
     checks: [
       ({ values }) =>
-        values.priceFrom > values.priceTo
+        values.priceFrom < values.priceTo
           ? undefined
-          : makeIssue('priceRange', 'Для Short цена "От" должна быть выше цены "До"'),
+          : makeIssue('priceRange', 'Для Short цена "От" должна быть ниже цены "До"'),
       ({ values }) =>
         values.priceFrom > values.secondaryPrice
           ? undefined
@@ -125,9 +131,9 @@ const RULES_BY_SCENARIO: Record<MagicScenarioKey, MagicRangeRuleSet> = {
           ? undefined
           : makeIssue('priceTo', 'Цена "До" должна быть ниже стоп-лосса'),
       ({ values, boundary }) =>
-        values.priceTo <= boundary
+        values.priceTo >= boundary
           ? undefined
-          : makeIssue('priceTo', `Диапазон мал: максимум "До" ${boundary.toFixed(2)}`),
+          : makeIssue('priceTo', `Укажите корректную цену. Минимум ${boundary.toFixed(2)}`, 'warning'),
     ],
   },
   'exit:long': {
@@ -144,7 +150,7 @@ const RULES_BY_SCENARIO: Record<MagicScenarioKey, MagicRangeRuleSet> = {
       ({ values, boundary }) =>
         values.priceTo >= boundary
           ? undefined
-          : makeIssue('priceTo', `Диапазон мал: минимум "До" ${boundary.toFixed(2)}`),
+          : makeIssue('priceTo', `Укажите корректную цену. Минимум ${boundary.toFixed(2)}`, 'warning'),
     ],
   },
   'exit:short': {
@@ -161,7 +167,7 @@ const RULES_BY_SCENARIO: Record<MagicScenarioKey, MagicRangeRuleSet> = {
       ({ values, boundary }) =>
         values.priceTo <= boundary
           ? undefined
-          : makeIssue('priceTo', `Диапазон мал: максимум "До" ${boundary.toFixed(2)}`),
+          : makeIssue('priceTo', `Укажите корректную цену. Максимум ${boundary.toFixed(2)}`, 'warning'),
     ],
   },
 }
