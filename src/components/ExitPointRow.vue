@@ -70,8 +70,8 @@ const handleRemove = () => exitStore.removeExitPoint(props.exitPoint.id)
   <tr class="border-b border-slate-700 hover:bg-slate-700/50 transition-colors">
     <td class="py-3 px-2 text-gray-300 text-sm">{{ index + 1 }}</td>
 
-    <td class="py-3 px-2">
-      <div class="relative">
+    <td class="py-3 px-2 align-top">
+      <div class="flex flex-col gap-1">
         <input
           :value="priceDisplay"
           type="text"
@@ -89,18 +89,29 @@ const handleRemove = () => exitStore.removeExitPoint(props.exitPoint.id)
           ]"
           placeholder="90000"
         />
-        <div
-          v-if="!isPriceValid && exitPoint.exitPrice > 0"
-          class="absolute left-0 top-full mt-1 text-xs text-yellow-400 whitespace-nowrap flex items-center gap-1 z-10"
+        <Transition
+          enter-active-class="transition-all duration-250 ease-out"
+          enter-from-class="opacity-0 -translate-y-1 max-h-0"
+          enter-to-class="opacity-100 translate-y-0 max-h-16"
+          leave-active-class="transition-all duration-200 ease-in"
+          leave-from-class="opacity-100 translate-y-0 max-h-16"
+          leave-to-class="opacity-0 -translate-y-1 max-h-0"
         >
-          <span>⚠️</span>
-          <span>{{ priceValidationMessage }}</span>
-        </div>
+          <div
+            v-if="!isPriceValid && exitPoint.exitPrice > 0"
+            class="overflow-hidden text-xs text-yellow-400"
+          >
+            <div class="flex items-start gap-1 whitespace-normal break-words leading-relaxed">
+              <span class="mt-0.5">⚠️</span>
+              <span>{{ priceValidationMessage }}</span>
+            </div>
+          </div>
+        </Transition>
       </div>
     </td>
 
-    <td class="py-3 px-2">
-      <div class="relative">
+    <td class="py-3 px-2 align-top">
+      <div class="flex flex-col gap-1">
         <input
           :value="formatPercentDisplay(exitPoint.percent) || ''"
           type="text"
@@ -118,13 +129,24 @@ const handleRemove = () => exitStore.removeExitPoint(props.exitPoint.id)
           ]"
           :placeholder="placeholderPercent"
         />
-        <div
-          v-if="isPercentOverflow"
-          class="absolute left-0 top-full mt-1 text-xs text-red-400 whitespace-nowrap flex items-center gap-1 z-10"
+        <Transition
+          enter-active-class="transition-all duration-250 ease-out"
+          enter-from-class="opacity-0 -translate-y-1 max-h-0"
+          enter-to-class="opacity-100 translate-y-0 max-h-16"
+          leave-active-class="transition-all duration-200 ease-in"
+          leave-from-class="opacity-100 translate-y-0 max-h-16"
+          leave-to-class="opacity-0 -translate-y-1 max-h-0"
         >
-          <span>⚠️</span>
-          <span>Доступно: {{ formatNumber(maxPercent) }}%</span>
-        </div>
+          <div
+            v-if="isPercentOverflow"
+            class="overflow-hidden text-xs text-red-400"
+          >
+            <div class="flex items-start gap-1 whitespace-normal break-words leading-relaxed">
+              <span class="mt-0.5">⚠️</span>
+              <span>Доступно: {{ formatNumber(maxPercent) }}%</span>
+            </div>
+          </div>
+        </Transition>
       </div>
     </td>
 

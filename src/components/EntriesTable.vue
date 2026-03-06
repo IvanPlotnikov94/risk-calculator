@@ -114,7 +114,7 @@ const handleSort = (order: 'original' | 'asc' | 'desc') => {
     </div>
 
     <!-- Table -->
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto overflow-y-visible">
       <table class="w-full">
         <thead>
           <tr class="border-b border-slate-700">
