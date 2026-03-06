@@ -312,6 +312,11 @@ export const useExitCalculatorStore = defineStore('exitCalculator', () => {
     exitPoints.value = exitPoints.value.filter(e => e.id !== id)
   }
 
+  const clearExitPoints = () => {
+    exitPoints.value = []
+    sortOrder.value = 'original'
+  }
+
   const updateExitPoint = (id: string, field: 'exitPrice' | 'percent', value: number) => {
     const ep = exitPoints.value.find(e => e.id === id)
     if (ep) {
@@ -391,6 +396,7 @@ export const useExitCalculatorStore = defineStore('exitCalculator', () => {
     // Actions
     addExitPoint,
     removeExitPoint,
+    clearExitPoints,
     updateExitPoint,
     setSortOrder,
     getScenarioForExit,

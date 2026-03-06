@@ -367,6 +367,11 @@ export const useCalculatorStore = defineStore('calculator', () => {
     entries.value = entries.value.filter(e => e.id !== id)
   }
 
+  const clearEntries = () => {
+    entries.value = []
+    sortOrder.value = 'original'
+  }
+
   const updateEntry = (id: string, field: 'price' | 'amount', value: number) => {
     const entry = entries.value.find(e => e.id === id)
     if (entry) {
@@ -476,6 +481,7 @@ export const useCalculatorStore = defineStore('calculator', () => {
     setMode,
     addEntry,
     removeEntry,
+    clearEntries,
     updateEntry,
     applyPreset,
     setSortOrder,

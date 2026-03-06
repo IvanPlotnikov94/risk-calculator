@@ -34,6 +34,17 @@ describe('Exit Calculator Store', () => {
     expect(exitStore.exitPoints.length).toBe(0)
   })
 
+  it('clears all exit points and resets sort order', () => {
+    exitStore.addExitPoint()
+    exitStore.addExitPoint()
+    exitStore.setSortOrder('desc')
+
+    exitStore.clearExitPoints()
+
+    expect(exitStore.exitPoints).toEqual([])
+    expect(exitStore.sortOrder).toBe('original')
+  })
+
   it('updates exit point fields', () => {
     exitStore.addExitPoint()
     const id = exitStore.exitPoints[0].id

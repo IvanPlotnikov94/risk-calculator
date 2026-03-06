@@ -12,7 +12,31 @@ const handleSort = (order: 'original' | 'asc' | 'desc') => {
 <template>
   <div class="bg-slate-800 rounded-lg p-6 shadow-xl">
     <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
-      <h2 class="text-xl font-semibold text-white">Точки входа</h2>
+      <div class="flex gap-3">
+        <h2 class="text-xl font-semibold text-white">Точки входа</h2>
+        <button
+          v-if="store.entries.length > 0"
+          type="button"
+          class="shrink-0 inline-flex items-center gap-1.5 rounded-md border border-slate-600 px-2.5 py-1.5 text-sm font-medium text-slate-300 transition-colors hover:border-slate-500 hover:bg-slate-700/60 hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400/60"
+          aria-label="Очистить таблицу точек входа"
+          title="Очистить таблицу"
+          @click="store.clearEntries"
+        >
+          <svg
+            class="h-3.5 w-3.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <path d="M9 3H15L16 5H21V7H3V5H8L9 3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+            <path d="M6 7H18L17 20C16.95 20.55 16.49 21 15.94 21H8.06C7.51 21 7.05 20.55 7 20L6 7Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+            <path d="M10 11V17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+            <path d="M14 11V17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+          </svg>
+          <span>Очистить таблицу</span>
+        </button>
+      </div>
       
       <div class="flex items-center gap-3">
         <!-- Sort buttons (only when there are entries) -->

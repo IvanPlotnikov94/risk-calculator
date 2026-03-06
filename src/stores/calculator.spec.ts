@@ -38,6 +38,20 @@ describe('Calculator Store', () => {
     expect(store.entries.find(e => e.id === firstEntryId)).toBeUndefined()
   })
 
+  it('clears all entries and resets sort order', () => {
+    const store = useCalculatorStore()
+    store.entries = [
+      { id: '1', price: 91000, amount: 100, originalIndex: 0 },
+      { id: '2', price: 90000, amount: 100, originalIndex: 1 },
+    ]
+    store.setSortOrder('desc')
+
+    store.clearEntries()
+
+    expect(store.entries).toEqual([])
+    expect(store.sortOrder).toBe('original')
+  })
+
   it('updates entry price', () => {
     const store = useCalculatorStore()
     store.addEntry()

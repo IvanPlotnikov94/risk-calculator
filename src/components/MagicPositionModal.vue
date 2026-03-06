@@ -251,6 +251,22 @@ const MODE_CALCULATORS = {
 
 const closeModal = () => emit('update:modelValue', false)
 
+const handleClearForm = () => {
+  isLiveValidationEnabled.value = false
+
+  form.riskUSDT = ''
+  form.pointsCount = MAGIC_MODAL_LIMITS.minPoints
+  form.priceFrom = ''
+  form.priceTo = ''
+  form.distributionMode = 'linear'
+  form.linearCoefficient = 1
+  form.manualPercents = Array.from({ length: form.pointsCount }, () => '')
+  form.stopLoss = ''
+  form.secondaryPrice = ''
+
+  clearErrors()
+}
+
 const handleBackdropClick = (event: MouseEvent) => {
   if (event.target !== event.currentTarget) return
   closeModal()
@@ -461,15 +477,68 @@ onBeforeUnmount(() => {
           >
             <div class="flex items-center justify-between border-b border-slate-800 px-6 py-4">
               <h3 class="text-lg font-semibold text-white">{{ title }}</h3>
-              <button
-                type="button"
-                class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-700 text-slate-300 transition hover:border-fuchsia-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-fuchsia-400"
-                aria-label="Закрыть модальное окно"
-                tabindex="0"
-                @click="closeModal"
-              >
-                ✕
-              </button>
+              <div class="flex items-center gap-2">
+                <div class="group relative">
+                  <button
+                    type="button"
+                    class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-cyan-400/40 bg-slate-800/95 text-cyan-200 shadow-[0_0_0_1px_rgba(34,211,238,0.12),0_0_14px_rgba(34,211,238,0.18)] transition duration-200 hover:-translate-y-0.5 hover:border-fuchsia-400/70 hover:text-white hover:shadow-[0_0_0_1px_rgba(168,85,247,0.35),0_0_18px_rgba(168,85,247,0.32)] focus:outline-none focus:ring-2 focus:ring-cyan-300"
+                    aria-label="Очистить поля на форме"
+                    title="Очистить поля на форме"
+                    tabindex="0"
+                    @click="handleClearForm"
+                  >
+                    <svg
+                      class="h-6 w-5 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:rotate-[-14deg]"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M7.2 14.2L13.8 7.6C14.7 6.7 16.2 6.7 17.1 7.6L18.8 9.3C19.7 10.2 19.7 11.7 18.8 12.6L12.2 19.2C11.8 19.6 11.3 19.8 10.8 19.8H7.5C6.7 19.8 6 19.1 6 18.3V15.6C6 15.1 6.3 14.6 7.2 14.2Z"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                      <path
+                        d="M10.9 10.5L15.9 15.5"
+                        stroke="currentColor"
+                        stroke-width="1.9"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                      <path
+                        d="M6 17.3H12.8"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                      />
+                      <path
+                        d="M16.9 5.9L20.1 2.7"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"
+                      />
+                    </svg>
+                  </button>
+                  <span
+                    class="pointer-events-none absolute right-0 top-full z-20 mt-2 whitespace-nowrap rounded-md border border-slate-600 bg-slate-900/95 px-2 py-1 text-[11px] text-slate-100 opacity-0 shadow-lg shadow-black/35 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
+                    role="tooltip"
+                  >
+                    Очистить поля на форме
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-700 text-slate-300 transition hover:border-fuchsia-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-fuchsia-400"
+                  aria-label="Закрыть модальное окно"
+                  tabindex="0"
+                  @click="closeModal"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
             <div class="space-y-4 px-6 py-5">
