@@ -39,9 +39,9 @@ const handleOpenMagicModal = () => {
   <div class="bg-slate-800 rounded-lg p-6 shadow-xl">
     <h2 class="text-xl font-semibold text-white mb-4">Настройки позиции</h2>
 
-    <div class="flex flex-wrap items-end gap-4 md:gap-6 md:justify-between">
+    <div class="flex flex-wrap items-start justify-start gap-4 md:gap-6">
       <!-- Ticker -->
-      <div class="w-full md:flex-1 md:min-w-[150px]">
+      <div class="w-full md:flex-1 md:min-w-[140px] lg:min-w-[150px]">
         <label class="block text-sm font-medium text-gray-300 mb-2">
           Тикер
         </label>
@@ -54,7 +54,7 @@ const handleOpenMagicModal = () => {
       </div>
 
       <!-- Direction -->
-      <div class="w-full md:flex-1 md:min-w-[200px]">
+      <div class="w-full md:flex-1 md:min-w-[180px] lg:min-w-[200px]">
         <label class="block text-sm font-medium text-gray-300 mb-2">
           Направление
         </label>
@@ -85,7 +85,7 @@ const handleOpenMagicModal = () => {
       </div>
 
       <!-- Stop Loss (shared) -->
-      <div class="w-full md:flex-1 md:min-w-[160px]">
+      <div class="w-full md:flex-1 md:min-w-[150px] lg:min-w-[165px]">
         <label class="block text-sm font-medium text-gray-300 mb-2">
           Стоп-лосс
         </label>
@@ -100,17 +100,28 @@ const handleOpenMagicModal = () => {
               : 'border border-slate-600 focus:ring-blue-500'
           ]"
         />
-        <div
-          v-if="slValidationActive"
-          class="mt-1 text-xs text-yellow-400 flex items-center gap-1"
+        <Transition
+          enter-active-class="transition-all duration-250 ease-out"
+          enter-from-class="opacity-0 -translate-y-1 max-h-0"
+          enter-to-class="opacity-100 translate-y-0 max-h-16"
+          leave-active-class="transition-all duration-200 ease-in"
+          leave-from-class="opacity-100 translate-y-0 max-h-16"
+          leave-to-class="opacity-0 -translate-y-1 max-h-0"
         >
-          <span>⚠️</span>
-          <span>{{ slValidationMessage }}</span>
-        </div>
+          <div
+            v-if="slValidationActive"
+            class="mt-1 overflow-hidden text-xs text-yellow-400"
+          >
+            <div class="flex items-start gap-1 whitespace-normal break-words leading-relaxed">
+              <span class="mt-0.5">⚠️</span>
+              <span>{{ slValidationMessage }}</span>
+            </div>
+          </div>
+        </Transition>
       </div>
 
       <!-- Entry mode: Take Profit -->
-      <div v-if="!isExitMode" class="w-full md:flex-1 md:min-w-[160px]">
+      <div v-if="!isExitMode" class="w-full md:flex-1 md:min-w-[150px] lg:min-w-[165px]">
         <label class="block text-sm font-medium text-gray-300 mb-2">
           Тейк-профит
         </label>
@@ -134,23 +145,27 @@ const handleOpenMagicModal = () => {
         </div>
       </div>
 
-      <button
+      <div
         v-if="!isExitMode"
-        type="button"
-        class="group relative h-[42px] w-full md:w-auto md:min-w-[220px] md:mx-auto xl:mx-0 xl:ml-auto rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-fuchsia-500 px-4 py-2 font-semibold text-white shadow-[0_0_16px_rgba(56,189,248,0.35)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_22px_rgba(217,70,239,0.45)] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-fuchsia-400"
-        aria-label="Открыть модальное окно расчета позиции"
-        tabindex="0"
-        @click="handleOpenMagicModal"
+        class="w-full md:basis-full md:flex md:justify-center xl:ml-auto xl:basis-auto xl:w-auto xl:justify-start xl:pt-7"
       >
-        <span class="absolute inset-0 rounded-xl border border-white/20" />
-        <span class="relative flex items-center justify-center gap-2 text-sm">
-          <span class="drop-shadow-[0_0_6px_rgba(255,255,255,0.75)]">✨</span>
-          <span>Рассчитать позицию</span>
-        </span>
-      </button>
+        <button
+          type="button"
+          class="group relative h-[42px] w-full max-w-[260px] md:w-[240px] xl:w-[220px] rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-fuchsia-500 px-4 py-2 font-semibold text-white shadow-[0_0_16px_rgba(56,189,248,0.35)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_22px_rgba(217,70,239,0.45)] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-fuchsia-400"
+          aria-label="Открыть модальное окно расчета позиции"
+          tabindex="0"
+          @click="handleOpenMagicModal"
+        >
+          <span class="absolute inset-0 rounded-xl border border-white/20" />
+          <span class="relative flex items-center justify-center gap-2 text-sm">
+            <span class="drop-shadow-[0_0_6px_rgba(255,255,255,0.75)]">✨</span>
+            <span>Рассчитать позицию</span>
+          </span>
+        </button>
+      </div>
 
       <!-- Exit mode: Entry Price -->
-      <div v-if="isExitMode" class="w-full md:flex-1 md:min-w-[160px]">
+      <div v-if="isExitMode" class="w-full md:flex-1 md:min-w-[150px] lg:min-w-[165px]">
         <label class="block text-sm font-medium text-gray-300 mb-2">
           Цена входа
         </label>
@@ -164,7 +179,10 @@ const handleOpenMagicModal = () => {
       </div>
 
       <!-- Exit mode: Total Volume -->
-      <div v-if="isExitMode" class="w-full md:flex-1 md:min-w-[160px]">
+      <div
+        v-if="isExitMode"
+        class="w-full md:basis-[calc(50%-0.75rem)] md:min-w-[250px] xl:flex-1 xl:min-w-[165px]"
+      >
         <label class="block text-sm font-medium text-gray-300 mb-2">
           Объем позиции (USDT)
         </label>
@@ -177,20 +195,24 @@ const handleOpenMagicModal = () => {
         />
       </div>
 
-      <button
+      <div
         v-if="isExitMode"
-        type="button"
-        class="group relative h-[42px] w-full md:w-auto md:min-w-[220px] md:mx-auto xl:mx-0 xl:ml-auto rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-fuchsia-500 px-4 py-2 font-semibold text-white shadow-[0_0_16px_rgba(56,189,248,0.35)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_22px_rgba(217,70,239,0.45)] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-fuchsia-400"
-        aria-label="Открыть модальное окно расчета позиции"
-        tabindex="0"
-        @click="handleOpenMagicModal"
+        class="w-full md:basis-[calc(50%-0.75rem)] md:min-w-[250px] md:flex md:justify-center md:pt-7 xl:ml-auto xl:basis-auto xl:min-w-0 xl:w-auto xl:justify-start"
       >
-        <span class="absolute inset-0 rounded-xl border border-white/20" />
-        <span class="relative flex items-center justify-center gap-2 text-sm">
-          <span class="drop-shadow-[0_0_6px_rgba(255,255,255,0.75)]">✨</span>
-          <span>Рассчитать позицию</span>
-        </span>
-      </button>
+        <button
+          type="button"
+          class="group relative h-[42px] w-full max-w-[260px] md:w-[240px] xl:w-[220px] rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-fuchsia-500 px-4 py-2 font-semibold text-white shadow-[0_0_16px_rgba(56,189,248,0.35)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_22px_rgba(217,70,239,0.45)] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-fuchsia-400"
+          aria-label="Открыть модальное окно расчета позиции"
+          tabindex="0"
+          @click="handleOpenMagicModal"
+        >
+          <span class="absolute inset-0 rounded-xl border border-white/20" />
+          <span class="relative flex items-center justify-center gap-2 text-sm">
+            <span class="drop-shadow-[0_0_6px_rgba(255,255,255,0.75)]">✨</span>
+            <span>Рассчитать позицию</span>
+          </span>
+        </button>
+      </div>
     </div>
   </div>
 
