@@ -433,12 +433,19 @@ export const useCalculatorStore = defineStore('calculator', () => {
     const totalAmount = params.riskUSDT / riskPerOneUSDT
     if (!Number.isFinite(totalAmount) || totalAmount <= 0) return false
 
-    const nextEntries = entryPrices.map((price, index) => ({
-      id: crypto.randomUUID(),
-      price: roundTo(price, 4),
-      amount: roundTo(totalAmount * normalizedWeights[index], 4),
-      originalIndex: index,
-    }))
+    const priceToRounded = roundTo(params.priceTo, 5)
+    const nextEntries = entryPrices.map((price, index) => {
+      const isLast = index === safeCount - 1
+      const finalPrice = isLast ? priceToRounded : roundTo(price, 5)
+
+      return {
+        id: crypto.randomUUID(),
+        price: finalPrice,
+        amount: roundTo(totalAmount * normalizedWeights[index], 4),
+        originalIndex: index,
+      }
+    })
+
 
     stopLoss.value = params.stopLoss
     takeProfit.value = params.takeProfit

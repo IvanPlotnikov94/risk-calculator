@@ -1,5 +1,5 @@
 const MAX_PRICE = 9999999
-const PRICE_DECIMALS = 9
+export const PRICE_DECIMALS = 5
 const MIN_PERCENT = 0.5
 const MAX_PERCENT = 100
 const PERCENT_DECIMALS = 2
@@ -40,7 +40,7 @@ export const parsePercent = (raw: string): number => {
 
 export const formatPriceDisplay = (n: number): string => {
   if (n === 0 || Number.isNaN(n)) return ''
-  return Number.isInteger(n) ? String(n) : n.toFixed(PRICE_DECIMALS).replace(/\.?0+$/, '')
+  return Number.isInteger(n) ? String(n) : n.toFixed(PRICE_DECIMALS)
 }
 
 export const formatPercentDisplay = (n: number): string => {

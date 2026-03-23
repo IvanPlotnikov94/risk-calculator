@@ -5,9 +5,8 @@ import {
   handleDecimalKeydown,
   sanitizePricePaste,
   PRICE_INT_MAX_INPUT_DIGITS,
+  PRICE_DECIMALS,
 } from '@/utils/inputValidation'
-
-const PRICE_DECIMALS = 9
 
 export const usePriceInput = (
   priceSource: () => number,

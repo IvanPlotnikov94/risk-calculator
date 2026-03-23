@@ -352,6 +352,7 @@ const handleCalculate = () => {
   const calculator = MODE_CALCULATORS[props.mode]
   const target = parseValidatedTarget()
   const distributionPercents = getDistributionPercents()
+
   const isCalculated = calculator.run(target, distributionPercents)
 
   if (!isCalculated) {
@@ -361,8 +362,8 @@ const handleCalculate = () => {
 
   const actualRisk = calculator.getActualRisk()
   const deviation = target.riskUSDT > 0 ? Math.abs(actualRisk - target.riskUSDT) / target.riskUSDT : 1
-  if (deviation > 0.03) {
-    errorMap.riskUSDT = 'Расчет не сошелся с риском в пределах 3%. Уточните входные данные.'
+  if (deviation > 0.05) {
+    errorMap.riskUSDT = 'Расчет не сошелся с риском в пределах 5%. Уточните входные данные.'
     return
   }
 
